@@ -1,0 +1,114 @@
+char* filetobuf(char *file)
+{
+	FILE *fptr;
+	long length;
+	char *buf;
+
+	fptr = fopen(file, "rb");
+	if (!fptr) return NULL;
+	fseek(fptr, 0, SEEK_END);
+	length = ftell(fptr);
+	buf = (char*)malloc(length + 1);
+	fseek(fptr, 0, SEEK_SET);
+	fread(buf, length, 1, fptr);
+	fclose(fptr);
+	buf[length] = 0;
+
+	return buf;
+}
+
+GLchar *vertexsource, *fragmentsource;
+GLuint vertexshader, fragmentshader;
+
+void make_vertexShader()
+{
+	vertexsource = filetobuf("vertex.glsl");
+
+	vertexshader = glCreateShader(GL_VERTEX_SHADER);
+
+	glShaderSource(vertexshader, 1, (const GLchar**)&vertexsource, 0);
+
+	glCompileShader(vertexshader);
+
+	GLint result;
+	GLchar errorLog[512];
+
+	glGetShaderiv(vertexshader, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderInfoLog(vertexshader, 512, NULL, errorLog);
+		cerr << "ERROR : vertex shader 컴파일실패\n" << errorLog << endl;
+		
+	}
+}
+void make_fragmentShader()
+{
+	fragmentsource = filetobuf("fragment.glsl");
+
+	fragmentshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(fragmentshader, 1, (const GLchar**)&fragmentsource, 0);
+
+	glCompileShader(fragmentshader);
+
+	GLint result;
+	GLchar errorLog[512];
+
+	glGetShaderiv(fragmentshader, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderInfoLog(fragmentshader, 512, NULL, errorLog);
+		cerr << "ERROR : vertex shader 컴파일실패\n" << errorLog << endl;
+
+	}
+}
+
+GLuint vao, vbo[2];
+
+GLuint s_program;
+
+void InitShader()
+{
+	make_vertexShader();
+	make_fragmentShader();
+
+	s_program = glCreateProgram();
+
+	glAttachShader(s_program, vertexshader);
+	glAttachShader(s_program, fragmentshader);
+	glLinkProgram(s_program);
+
+	//checkCompileErrors(s_program, "PROGRAM");
+
+	glDeleteShader(vertexshader);
+	glDeleteShader(fragmentshader);
+
+	glUseProgram(s_program);
+}
+
+void InitBuffer()
+{
+	glGenVertexArrays(1, &vao);
+
+	glGenBuffers(2, vbo);
+
+	glBindVertexArray(vao);
+
+	//위치
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW); 
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); 
+
+	glEnableVertexAttribArray(0);
+
+	//색상
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glEnableVertexAttribArray(1);
+}
