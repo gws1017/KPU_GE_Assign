@@ -1,10 +1,10 @@
-char* filetobuf(char *file)
+char* filetobuf(const char *file)
 {
 	FILE *fptr;
 	long length;
 	char *buf;
 
-	fptr = fopen(file, "rb");
+	fopen_s(&fptr,file, "rb");
 	if (!fptr) return NULL;
 	fseek(fptr, 0, SEEK_END);
 	length = ftell(fptr);
@@ -19,6 +19,8 @@ char* filetobuf(char *file)
 
 GLchar *vertexsource, *fragmentsource;
 GLuint vertexshader, fragmentshader;
+GLuint vao, vbo[2];
+GLuint s_program;
 
 void make_vertexShader()
 {
@@ -63,9 +65,7 @@ void make_fragmentShader()
 	}
 }
 
-GLuint vao, vbo[2];
 
-GLuint s_program;
 
 void InitShader()
 {
