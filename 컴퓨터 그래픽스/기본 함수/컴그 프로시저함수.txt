@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#define WIDTH 500
+#define HEIGHT 500
 
 GLvoid TimerFunction(int value);
 GLvoid KeyBoard(unsigned char key, int x, int y);
@@ -17,7 +19,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설�
 	glutInit(&argc, argv); // glut 초기화
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); // 디스플레이 모드 설정
 	glutInitWindowPosition(0, 0); // 윈도우의 위치 지정
-	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
+	glutInitWindowSize(WIDTH, HEIGHT); // 윈도우의 크기 지정
 	glutCreateWindow("Example1"); // 윈도우 생성(윈도우 이름)
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
@@ -28,6 +30,8 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설�
 	}
 	else
 		std::cout << "GLEW Initialized\n";
+
+	//세이더와 버퍼 초기화 지점
 	glutDisplayFunc(drawScene); // 출력 함수의 지정
 	glutReshapeFunc(Reshape); // 다시 그리기 함수 지정
 	glutKeyboardFunc(KeyBoard);
@@ -44,7 +48,7 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 
 GLvoid TimerFunction(int value)
 {
-	
+	glutPostRedisplay();
 }
 
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수 
