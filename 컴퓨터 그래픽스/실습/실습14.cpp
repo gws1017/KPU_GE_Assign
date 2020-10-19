@@ -97,6 +97,8 @@ glm::mat4 R = glm::mat4(1.0f);
 glm::mat4 T = glm::mat4(1.0f);
 glm::mat4 Rx = glm::mat4(1.0f);
 glm::mat4 Ry = glm::mat4(1.0f);
+glm::mat4 Rc = glm::mat4(1.0f);
+glm::mat4 Rp = glm::mat4(1.0f);
 glm::mat4 Tx = glm::mat4(1.0f);
 glm::mat4 Ty = glm::mat4(1.0f);
 unsigned int modelLocation;
@@ -277,7 +279,8 @@ void InitRotate()
 	Ry = glm::rotate(Ry, glm::radians(-30.0f), glm::vec3(0.0, 1.0, 0.0));
 
 	R = Rx * Ry;
-
+	Rc = R;
+	Rp = R;
 	modelLocation = glGetUniformLocation(s_program, "modelTransform");
 	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R));
 }
@@ -357,50 +360,28 @@ GLvoid ArrowKey(int key, int x, int y)
 GLvoid KeyBoard(unsigned char key, int x, int y)
 {
 
-	if (key == 'c') select = 0;
-	if (key == 'p') select = 1;
-
-	if (key == 'w') w = true;
-	if (key == 'W') w = false;
-
-	if (key == 'h') {
-		if (!h)
-		{
-			h = true;
-			glEnable(GL_DEPTH_TEST);
-			glEnable(GL_CULL_FACE);
-		}
-		else
-		{
-			h = false;
-			glDisable(GL_DEPTH_TEST);
-			glDisable(GL_CULL_FACE);
-		}
-	}
-
-	if (key == 'x' || key == 'x' || key == 'y' || key == 'y')
+	if (key == 'x' || key == 'X' || key == 'y' || key == 'Y')
 	{
 		if (stop == true) glutTimerFunc(t, TimerFunction, 1);
 
-		if (key == 'x' || key == 'x')
+		if (key == 'x' || key == 'X')
 		{
 
 			stop = false;
 			if (key == 'x') dx = 1;
 			else dx = -1;
 			tx = true;
-			ty = false;
+		
 
 		}
 
-		if (key == 'y' || key == 'y')
+		if (key == 'y' || key == 'Y')
 		{
 
 			stop = false;
 			if (key == 'y') dy = 1;
 			else dy = -1;
 			ty = true;
-			tx = false;
 
 		}
 	}
@@ -417,16 +398,17 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 
 void Rotate()
 {
+	
 	if (tx)
 	{
-		Rx = glm::rotate(Rx, glm::radians(dx * 30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		R = Rx * Ry;
+		Rx = glm::rotate(Rx, glm::radians(dx * 10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		Rc = Rx ;
 	}
 
 	if (ty)
 	{
-		Ry = glm::rotate(Ry, glm::radians(dy * 30.0f), glm::vec3(0.0, 1.0, 0.0));
-		R = Rx * Ry;
+		Ry = glm::rotate(Ry, glm::radians(dy * 10.0f), glm::vec3(0.0, 1.0, 0.0));
+		Rp = Ry;
 	}
 
 }
@@ -436,11 +418,11 @@ void init_Trans(int i)
 	Tx = glm::mat4(1.0f);
 	if (i == 0)
 	{
-		Tx = glm::translate(Tx, glm::vec3(0.5, 0.0, 0.0));
+		Tx = glm::translate(Tx, glm::vec3(0.5, -0.1, 0.0));
 	}
 	if (i == 1)
 	{
-		Tx = glm::translate(Tx, glm::vec3(-0.5, 0.0, 0.0));
+		Tx = glm::translate(Tx, glm::vec3(-0.5, 0.1, 0.0));
 	}
 	T = Tx * Ty;
 	glutPostRedisplay();
@@ -469,11 +451,11 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	DrawCL();
 
 	init_Trans(0);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R*T));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(T * Rc));
 	glBindVertexArray(vao[0]);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	init_Trans(1);
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R*T));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Rp*T));
 	glBindVertexArray(vao[1]);
 	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
 
