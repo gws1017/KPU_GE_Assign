@@ -3,20 +3,30 @@
 #include <gl/glew.h> // 필요한 헤더파일 include
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm.hpp>
+#include <ext.hpp>
+#include <gtc/matrix_transform.hpp>
 
 using namespace std;
 
+//윈도우 크기
 #define WIDTH 500
 #define HEIGHT 500
-#define COUNT 2 //0 바닥 1 몸체아래 2몸체위 3원기둥왼쪽 4 원기둥 오른쪽
-#define CP 8 // CUBE POINT
-#define CSZ1 0.3
+
+//갯수
+#define COUNT 3 //0 바닥 1 몸체아래 2몸체위 3원기둥왼쪽 4 원기둥 오른쪽
+#define CP 8    //CUBE POINT
+#define CI 36
+
+//도형의 크기
+#define CSZ1 0.2
+#define CSZ2 0.15
 #define BTSZ 1.0
 
 glm::mat4 projection = glm::mat4(1.0f);
+glm::mat4 projTZ = glm::mat4(1.0f);
+glm::mat4 projTX = glm::mat4(1.0f);
+
 glm::mat4 view = glm::mat4(1.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 3.0f);
 glm::vec3 cameraPos2 = glm::vec3(0.0f, 1.0f, 8.0f);
@@ -32,7 +42,8 @@ GLvoid Reshape(int w, int h);
 GLvoid ArrowKey(int, int, int);
 
 GLint select = 0, t = 10;
-GLboolean w = false, h = true, stop = true;
+GLboolean w = true, h = true, stop = true;
+GLUquadric *qobj, *qobj2;
 
 GLfloat cube_pos[CP][3] = {
 	-CSZ1,0,CSZ1, //왼쪽앞아래
@@ -45,18 +56,45 @@ GLfloat cube_pos[CP][3] = {
 	-CSZ1,CSZ1,-CSZ1
 };
 
+GLfloat cube_pos2[CP][3] = {
+	-CSZ2,-0.1,CSZ2, //왼쪽앞아래
+	CSZ2,-0.1,CSZ2, // 오른쪽앞아래
+	CSZ2,-0.1,-CSZ2, //오른쪽뒤아래
+	-CSZ2,-0.1,-CSZ2, //왼쪽뒤아래
+	-CSZ2,CSZ2,CSZ2,
+	CSZ2,CSZ2,CSZ2,
+	CSZ2,CSZ2,-CSZ2,
+	-CSZ2,CSZ2,-CSZ2
+};
 
-GLint cube_index[] = {
+GLint cube_index[CI] = {
+	0,1,5,
+	0,5,4,
 	1,2,6,
 	1,6,5,
 	2,3,6,
 	3,7,6,
 	0,7,3,
 	0,4,7,
+	4,5,6,
+	4,6,7,
 	0,2,1,
 	0,3,2,
 };
-
+/*GLint cube_index2[36] = {
+	0,1,5,
+	0,5,4,
+	1,2,6,
+	1,6,5,
+	2,3,6,
+	3,7,6,
+	0,7,3,
+	0,4,7,
+	4,5,6,
+	4,6,7,
+	0,2,1,
+	0,3,2,
+};*/
 
 GLfloat bottom_pos[4][3] = {
 	-BTSZ,0.0,-BTSZ,
@@ -70,18 +108,27 @@ GLint bottom_index[6] = {
 };
 GLfloat grid_color[4][3] = { 0.0f, };
 
-GLfloat cube_color[CP][3] = {
+GLfloat cube_color1[CP][3] = {
 	1.0f,0.0f,0.0f,
 	1.0f,0.0f,0.0f,
 	1.0f,0.0f,0.0f,
 	1.0f,0.0f,0.0f,
-	0.0f,1.0f,0.0f,
-	0.0f,1.0f,0.0f,
-	0.0f,1.0f,0.0f,
-	0.0f,1.0f,0.0f
+	1.0f,0.0f,0.0f,
+	1.0f,0.0f,0.0f,
+	1.0f,0.0f,0.0f,
+	1.0f,0.0f,0.0f
 };
 
-
+GLfloat cube_color2[CP][3] = {
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f,
+	1.0f,1.0f,0.0f
+};
 
 glm::mat4 R = glm::mat4(1.0f);
 glm::mat4 T = glm::mat4(1.0f);
@@ -91,6 +138,14 @@ glm::mat4 Ry = glm::mat4(1.0f);
 
 glm::mat4 Tx = glm::mat4(1.0f);
 glm::mat4 Ty = glm::mat4(1.0f);
+
+glm::mat4 C2 = glm::mat4(1.0f);
+glm::mat4 C2Ty = glm::mat4(1.0f);
+
+glm::mat4 CL = glm::mat4(1.0f);
+glm::mat4 CLRX = glm::mat4(1.0f);
+glm::mat4 CLTY = glm::mat4(1.0f);
+
 unsigned int modelLocation, projectionLocation, viewLocation;
 
 float randomRGB()
@@ -200,9 +255,9 @@ void InitBuffer()
 
 		//위치
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[i][0]);
-		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos), cube_pos, GL_STATIC_DRAW);
-		//else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		//else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
+		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(bottom_pos), bottom_pos, GL_STATIC_DRAW);
+		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos), cube_pos, GL_STATIC_DRAW);
+		else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos2), cube_pos2, GL_STATIC_DRAW);
 		//else if (i == 3) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		//else if (i == 4) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -210,9 +265,9 @@ void InitBuffer()
 
 		//색상
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[i][1]);
-		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color), cube_color, GL_STATIC_DRAW);
-		//else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		//else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
+		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(grid_color), grid_color, GL_STATIC_DRAW);
+		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color1), cube_color1, GL_STATIC_DRAW);
+		else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color2), cube_color2, GL_STATIC_DRAW);
 		//else if (i == 3) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		//else if (i == 4) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -222,8 +277,8 @@ void InitBuffer()
 
 		glGenBuffers(1, &ebo[i]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[i]);
-		if (i == 0) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
-		//if (i == 1) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
+		if (i == 0) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(bottom_index), bottom_index, GL_STATIC_DRAW);
+		if (i == 1 || i == 2) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
 		//if (i == 2 || i == 3) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(0);
@@ -234,7 +289,7 @@ void InitBuffer()
 
 }
 
-
+/*
 void UpdateBuffer()
 {
 	for (int i = 0; i < COUNT; i++)
@@ -249,23 +304,37 @@ void UpdateBuffer()
 
 		glEnableVertexAttribArray(0);
 	}
+}*/
+
+void DrawCylinder(GLUquadric* qobj)
+{
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	gluQuadricOrientation(qobj, GLU_OUTSIDE);
+	gluCylinder(qobj, 0.05, 0.05, 0.4, 20, 8);
 }
 
 void InitRT()
 {
+	
+
 	R = glm::mat4(1.0f);
 
 	Rx = glm::mat4(1.0f);
 	Ry = glm::mat4(1.0f);
 
-	glUseProgram(s_program);
-	modelLocation = glGetUniformLocation(s_program, "modelTransform");
 
-	Rx = glm::rotate(Rx, glm::radians(20.0f), glm::vec3(1.0, 0.0, 0.0));
-	Ry = glm::rotate(Ry, glm::radians(20.0f), glm::vec3(0.0, 1.0, 0.0));
+	C2Ty = glm::translate(C2Ty, glm::vec3(0.0f, CSZ2*2 , 0.0f));
+
+	CLTY = glm::translate(CLTY, glm::vec3(0.0f, 0.4f+CSZ1+ CSZ2, 0.0f));
+	CLRX = glm::rotate(CLRX,glm::radians(90.0f),glm::vec3(1.0f,0.0f,0.0f));
+
+	//Rx = glm::rotate(Rx, glm::radians(20.0f), glm::vec3(1.0, 0.0, 0.0));
+	Ry = glm::rotate(Ry, glm::radians(-20.0f), glm::vec3(0.0, 1.0, 0.0));
 
 	R = Rx * Ry;
-	Ry = glm::mat4(1.0f);
+	
 
 	
 }
@@ -337,8 +406,11 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 
 
 
-	if (key == 'w') w = true;
-	if (key == 'W') w = false;
+	if (key == 'w') {
+		if(w == false)w = true;
+		else w = false;
+	}
+	
 
 	if (key == 'h') {
 		if (!h)
@@ -353,6 +425,18 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 
 
 		}
+	}
+	if (key == 'z') {
+		projTZ = glm::translate(projTZ, glm::vec3(0.0f, 0.0f, 0.5f));
+	}
+	if (key == 'Z') {
+		projTZ = glm::translate(projTZ, glm::vec3(0.0f, 0.0f, -0.5f));
+	}
+	if (key == 'x') {
+		projTZ = glm::translate(projTZ, glm::vec3(0.5f, 0.0f, 0.0f));
+	}
+	if (key == 'X') {
+		projTZ = glm::translate(projTZ, glm::vec3(-0.5f, 0.0f, 0.f));
 	}
 
 	if (key == 't' || key == 'T' || key == 'y' || key == 'f' || key == 'F' || key == 'o' || key == 'O')
@@ -410,6 +494,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	viewLocation = glGetUniformLocation(s_program, "viewTransform");
 
 	projection = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 50.0f);
+	projection = projection * projTZ * projTX;
 	projectionLocation = glGetUniformLocation(s_program, "projectionTransform");
 
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
@@ -421,12 +506,26 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	if (h)glEnable(GL_DEPTH_TEST);
 	else glDisable(GL_DEPTH_TEST);
 
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R*T));
+	modelLocation = glGetUniformLocation(s_program, "modelTransform");
 
-	glBindVertexArray(vao[select]);
-	glDrawElements(GL_TRIANGLES, NC, GL_UNSIGNED_INT, 0);
 
-		
+	//스자이공부
+
+	C2 = C2Ty;
+
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R));
+
+	for (int i = 0; i < COUNT; i++)
+	{
+		glBindVertexArray(vao[i]);
+		if(i == 2)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R * C2));
+		glDrawElements(GL_TRIANGLES, CI, GL_UNSIGNED_INT, 0);
+	}
+
+	CL = CLTY * CLRX;
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr( CL));
+	DrawCylinder(qobj);
+	DrawCylinder(qobj2);
 
 	glutSwapBuffers(); // 화면에 출력하기
 
