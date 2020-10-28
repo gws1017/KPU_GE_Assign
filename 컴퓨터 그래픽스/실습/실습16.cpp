@@ -158,13 +158,7 @@ GLfloat cuf_color[CFP][3] = {
 	1.0f,1.0f,0.0f,
 	1.0f,1.0f,0.0f,
 };
-GLfloat cff_color[CFP][3] = {
-	0.0f,1.0f,1.0f,
-	0.0f,1.0f,1.0f,
-	0.0f,1.0f,1.0f,
-	0.0f,1.0f,1.0f,
 
-};
 
 GLfloat pyramid_color[PP][3] = {
 	1.0f,0.0f,1.0f,

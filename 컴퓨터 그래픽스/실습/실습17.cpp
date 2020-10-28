@@ -3,9 +3,9 @@
 #include <gl/glew.h> // 필요한 헤더파일 include
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
-#include <glm.hpp>
-#include <ext.hpp>
-#include <gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace std;
 
@@ -26,6 +26,7 @@ using namespace std;
 glm::mat4 projection = glm::mat4(1.0f);
 glm::mat4 projTZ = glm::mat4(1.0f);
 glm::mat4 projTX = glm::mat4(1.0f);
+glm::mat4 projRY = glm::mat4(1.0f);
 
 glm::mat4 view = glm::mat4(1.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 3.0f);
@@ -41,7 +42,7 @@ GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid ArrowKey(int, int, int);
 
-GLint select = 0, t = 10;
+GLint select = 0, t = 100, m = 0, a=0, delta_time = 0, delta_time2 = 0, state = 0;
 GLboolean w = true, h = true, stop = true;
 GLUquadric *qobj, *qobj2;
 
@@ -81,6 +82,7 @@ GLint cube_index[CI] = {
 	0,2,1,
 	0,3,2,
 };
+
 /*GLint cube_index2[36] = {
 	0,1,5,
 	0,5,4,
@@ -130,6 +132,7 @@ GLfloat cube_color2[CP][3] = {
 	1.0f,1.0f,0.0f
 };
 
+glm::mat4 World = glm::mat4(1.0f);
 glm::mat4 R = glm::mat4(1.0f);
 glm::mat4 T = glm::mat4(1.0f);
 
@@ -139,13 +142,32 @@ glm::mat4 Ry = glm::mat4(1.0f);
 glm::mat4 Tx = glm::mat4(1.0f);
 glm::mat4 Ty = glm::mat4(1.0f);
 
-glm::mat4 C2 = glm::mat4(1.0f);
+glm::mat4 C2 = glm::mat4(1.0f); //박스 초기위치 조정
 glm::mat4 C2Ty = glm::mat4(1.0f);
 
-glm::mat4 CL = glm::mat4(1.0f);
+glm::mat4 CL = glm::mat4(1.0f); //실린더 초기위치 조정
 glm::mat4 CLRX = glm::mat4(1.0f);
 glm::mat4 CLTY = glm::mat4(1.0f);
+glm::mat4 CLTX = glm::mat4(1.0f);
+glm::mat4 CLTX2 = glm::mat4(1.0f);
 
+glm::mat4 CR = glm::mat4(1.0f); // 크레인 전체 행렬
+glm::mat4 CRTX = glm::mat4(1.0f);
+
+glm::mat4 CRM = glm::mat4(1.0f); // 크레인 중단부 행렬
+glm::mat4 CRMRY = glm::mat4(1.0f);
+
+glm::mat4 CRA = glm::mat4(1.0f); // 크레인 팔 행렬
+glm::mat4 CRARX = glm::mat4(1.0f);
+glm::mat4 CRATY = glm::mat4(1.0f);
+glm::mat4 CRATZ = glm::mat4(1.0f);
+
+glm::mat4 CRA2 = glm::mat4(1.0f); // 크레인 팔 행렬
+glm::mat4 CRARX2 = glm::mat4(1.0f);
+glm::mat4 CRATY2 = glm::mat4(1.0f);
+glm::mat4 CRATZ2 = glm::mat4(1.0f);
+
+glm::mat4 temp = glm::mat4(1.0f);
 unsigned int modelLocation, projectionLocation, viewLocation;
 
 float randomRGB()
@@ -179,7 +201,7 @@ char* filetobuf(const char *file)
 
 GLchar *vertexsource, *fragmentsource;
 GLuint vertexshader, fragmentshader;
-GLuint vao[COUNT], vbo[COUNT][2], ebo[COUNT];
+GLuint vao[COUNT], vbo[COUNT][1], ebo[COUNT];
 GLuint s_program;
 
 void make_vertexShader()
@@ -264,14 +286,14 @@ void InitBuffer()
 		glEnableVertexAttribArray(0);
 
 		//색상
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[i][1]);
+		/*glBindBuffer(GL_ARRAY_BUFFER, vbo[i][1]);
 		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(grid_color), grid_color, GL_STATIC_DRAW);
 		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color1), cube_color1, GL_STATIC_DRAW);
 		else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color2), cube_color2, GL_STATIC_DRAW);
 		//else if (i == 3) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		//else if (i == 4) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(1);*/
 
 		//EBO 설정
 
@@ -308,11 +330,13 @@ void UpdateBuffer()
 
 void DrawCylinder(GLUquadric* qobj)
 {
+	
 	qobj = gluNewQuadric();
 	gluQuadricDrawStyle(qobj, GLU_FILL);
 	gluQuadricNormals(qobj, GLU_SMOOTH);
 	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-	gluCylinder(qobj, 0.05, 0.05, 0.4, 20, 8);
+	
+	gluCylinder(qobj, 0.03, 0.03, 0.35, 20, 8);
 }
 
 void InitRT()
@@ -327,9 +351,10 @@ void InitRT()
 
 	C2Ty = glm::translate(C2Ty, glm::vec3(0.0f, CSZ2*2 , 0.0f));
 
-	CLTY = glm::translate(CLTY, glm::vec3(0.0f, 0.4f+CSZ1+ CSZ2, 0.0f));
+	CLTY = glm::translate(CLTY, glm::vec3(0.0f, 0.35f+CSZ1+ CSZ2+ 0.1, 0.0f));
 	CLRX = glm::rotate(CLRX,glm::radians(90.0f),glm::vec3(1.0f,0.0f,0.0f));
-
+	CLTX = glm::translate(CLTX, glm::vec3(-0.1f, 0.0f, 0.0f));
+	CLTX2 = glm::translate(CLTX2, glm::vec3(0.1f, 0.0f, 0.0f));
 	//Rx = glm::rotate(Rx, glm::radians(20.0f), glm::vec3(1.0, 0.0, 0.0));
 	Ry = glm::rotate(Ry, glm::radians(-20.0f), glm::vec3(0.0, 1.0, 0.0));
 
@@ -369,7 +394,45 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop(); // 이벤트 처리 시작 
 }
 
+void allinit()
+{
+	World = glm::mat4(1.0f);
+	R = glm::mat4(1.0f);
+	T = glm::mat4(1.0f);
 
+	Rx = glm::mat4(1.0f);
+	Ry = glm::mat4(1.0f);
+
+	 Tx = glm::mat4(1.0f);
+	 Ty = glm::mat4(1.0f);
+
+	 C2 = glm::mat4(1.0f); //박스 초기위치 조정
+	 C2Ty = glm::mat4(1.0f);
+
+	 CL = glm::mat4(1.0f); //실린더 초기위치 조정
+	CLRX = glm::mat4(1.0f);
+	CLTY = glm::mat4(1.0f);
+	CLTX = glm::mat4(1.0f);
+	CLTX2 = glm::mat4(1.0f);
+
+	CR = glm::mat4(1.0f); // 크레인 전체 행렬
+	CRTX = glm::mat4(1.0f);
+
+	CRM = glm::mat4(1.0f); // 크레인 중단부 행렬
+	CRMRY = glm::mat4(1.0f);
+
+	CRA = glm::mat4(1.0f); // 크레인 팔 행렬
+	CRARX = glm::mat4(1.0f);
+	CRATY = glm::mat4(1.0f);
+	CRATZ = glm::mat4(1.0f);
+
+	CRA2 = glm::mat4(1.0f); // 크레인 팔 행렬
+	CRARX2 = glm::mat4(1.0f);
+	CRATY2 = glm::mat4(1.0f);
+	CRATZ2 = glm::mat4(1.0f);
+
+	temp = glm::mat4(1.0f);
+}
 
 
 GLvoid ArrowKey(int key, int x, int y)
@@ -436,45 +499,105 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 		projTZ = glm::translate(projTZ, glm::vec3(0.5f, 0.0f, 0.0f));
 	}
 	if (key == 'X') {
-		projTZ = glm::translate(projTZ, glm::vec3(-0.5f, 0.0f, 0.f));
+		projTZ = glm::translate(projTZ, glm::vec3(-0.5f, 0.0f, 0.0f));
 	}
-
-	if (key == 't' || key == 'T' || key == 'y' || key == 'f' || key == 'F' || key == 'o' || key == 'O')
+	if (key == 'r') {
+		projRY = glm::rotate(projRY,glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	if (key == 'R') {
+		projRY = glm::rotate(projRY, glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	if (key == 'b') CRTX = glm::translate(CRTX, glm::vec3(0.1f, 0.0f, 0.0f));
+	if (key == 'B') CRTX = glm::translate(CRTX, glm::vec3(-0.1f, 0.0f, 0.0f));
+	if ( key == 'm' || key == 'M' || key == 't' || key == 'T' || key == 'O')
 	{
 		if (stop == true)
 		{
 			stop = false;
 			glutTimerFunc(t, TimerFunction, 1);
 		}
-
 		
-
+		if (key == 'm') m = 1;
+		if (key == 'M') m = -1;
+		if (key == 't') a = 1;
+		if (key == 'T') a = -1;
 	}
 	if (key == 's' || key == 'S')
 	{
-		Tx = glm::mat4(1.0f);
-		Ty = glm::mat4(1.0f);
-		T = glm::mat4(1.0f);
-		InitRT();
 		stop = true;
 	}
-
+	if (key == 'c' || key == 'C')
+	{
+		select = 0, t = 100, m = 0, a = 0, delta_time = 0, delta_time2 = 0, state = 0;
+		stop = true;
+		allinit();
+		InitRT();
+	}
+	if (key == 'q' || key == 'Q')
+	{
+		exit(0);
+	}
 	glutPostRedisplay();
 }
 
 void Rotate()
 {
-	
+	CRMRY = glm::rotate(CRMRY, glm::radians(m*10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+	CRARX = glm::rotate(CRARX, glm::radians(a*7.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	CRARX2 = glm::rotate(CRARX2, glm::radians(a*-7.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 }
 void Translate()
 {
-	
+	CRATZ = glm::translate(CRATZ, glm::vec3(0.0f, 0.0f, a*0.035f));
+	CRATY = glm::translate(CRATY, glm::vec3(0.0f, a*-0.02f, 0.0f));
+
+	CRATZ2 = glm::translate(CRATZ2, glm::vec3(0.0f, 0.0f, a*-0.035f));
+	CRATY2 = glm::translate(CRATY2, glm::vec3(0.0f, a*-0.02f, 0.0f));
 }
+
+
+
 GLvoid TimerFunction(int value)
 {
 	if (stop) return;
 
+	if(m!= 0) delta_time++;
+	if (a!= 0) delta_time2++;
+	if (delta_time % 10 == 0)
+	{
+		delta_time = 0;
+		m = 0;
+		
+	}
+
+	if (a != 0)
+	{
+		if (delta_time2 % 10 == 0 && (state == 0))
+		{
+			a = -1;
+			state = 1;
+
+		}
+		else if (delta_time2 % 10 == 0 && state == 1)
+		{
+			a = 1;
+			state = 2;
+		}
+		else if (delta_time2 % 10 == 0 && state == 2)
+		{
+			a = -1;
+			state = 3;
+		}
+		else if (delta_time2 % 10 == 0 && state == 3)
+		{
+			a = 1;
+			state = 0;
+		}
+	}
+	
+	
+	
 	Rotate();
 	Translate();
 
@@ -489,12 +612,13 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	// 그리기 부분 구현
 	//--- 그리기 관련 부분이 여기에 포함된다.
 	glUseProgram(s_program);
+	int vColorLocation = glGetUniformLocation(s_program, "outColor");
 
 	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 	viewLocation = glGetUniformLocation(s_program, "viewTransform");
 
 	projection = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 50.0f);
-	projection = projection * projTZ * projTX;
+	projection = projection * projTZ * projTX * projRY;
 	projectionLocation = glGetUniformLocation(s_program, "projectionTransform");
 
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
@@ -511,20 +635,44 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	//스자이공부
 
+	
+	World = R * T;
+
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World));
+
+	CR = CRTX;
+
 	C2 = C2Ty;
 
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R));
+	CRM = CRMRY;
 
+	CRA = CRATZ * CRATY  ;
+	CRA2 = CRATZ2 * CRATY2;
 	for (int i = 0; i < COUNT; i++)
 	{
 		glBindVertexArray(vao[i]);
-		if(i == 2)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R * C2));
+		if(i == 0)glUniform4f(vColorLocation, 0.3f, 0.3f, 0.3f, 1.0); // 바닥
+		if (i == 1)
+		{
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World * CR));
+			glUniform4f(vColorLocation, 1.0f, 0.0f, 0.0f, 1.0);
+		}
+		if (i == 2) {
+			glUniform4f(vColorLocation, 1.0f, 1.0f, 0.0f, 1.0);
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World * CR * CRM * C2 ));
+		}
 		glDrawElements(GL_TRIANGLES, CI, GL_UNSIGNED_INT, 0);
 	}
 
 	CL = CLTY * CLRX;
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr( CL));
+	//glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr( CL));
+	glUniform4f(vColorLocation, 0.0f, 1.0f, 1.0f, 1.0);
+
+	if(state == 0 || state == 1)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA * CL * CLTX * CRARX));
+	else if(state ==2 || state ==3)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA2 * CL * CLTX * CRARX2));
 	DrawCylinder(qobj);
+	if (state == 0 || state == 1)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA2 * CL * CLTX2* CRARX2));
+	else if(state == 2 || state == 3)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA * CL * CLTX2* CRARX));
 	DrawCylinder(qobj2);
 
 	glutSwapBuffers(); // 화면에 출력하기
