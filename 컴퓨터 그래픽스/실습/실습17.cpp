@@ -1,684 +1,1959 @@
-#include <iostream>
-#include <random>
-#include <gl/glew.h> // 필요한 헤더파일 include
-#include <gl/freeglut.h>
-#include <gl/freeglut_ext.h>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <GL/glut.h> // includes gl.h glu.h
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
 
-using namespace std;
-
-//윈도우 크기
-#define WIDTH 500
-#define HEIGHT 500
-
-//갯수
-#define COUNT 3 //0 바닥 1 몸체아래 2몸체위 3원기둥왼쪽 4 원기둥 오른쪽
-#define CP 8    //CUBE POINT
-#define CI 36
-
-//도형의 크기
-#define CSZ1 0.2
-#define CSZ2 0.15
-#define BTSZ 1.0
-
-glm::mat4 projection = glm::mat4(1.0f);
-glm::mat4 projTZ = glm::mat4(1.0f);
-glm::mat4 projTX = glm::mat4(1.0f);
-glm::mat4 projRY = glm::mat4(1.0f);
-
-glm::mat4 view = glm::mat4(1.0f);
-glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 3.0f);
-glm::vec3 cameraPos2 = glm::vec3(0.0f, 1.0f, 8.0f);
-glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-
-
-GLvoid TimerFunction(int value);
-GLvoid KeyBoard(unsigned char key, int x, int y);
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
-GLvoid ArrowKey(int, int, int);
-
-GLint select = 0, t = 100, m = 0, a=0, delta_time = 0, delta_time2 = 0, state = 0;
-GLboolean w = true, h = true, stop = true;
-GLUquadric *qobj, *qobj2;
-
-GLfloat cube_pos[CP][3] = {
-	-CSZ1,0,CSZ1, //왼쪽앞아래
-	CSZ1,0,CSZ1, // 오른쪽앞아래
-	CSZ1,0,-CSZ1, //오른쪽뒤아래
-	-CSZ1,0,-CSZ1, //왼쪽뒤아래
-	-CSZ1,CSZ1,CSZ1,
-	CSZ1,CSZ1,CSZ1,
-	CSZ1,CSZ1,-CSZ1,
-	-CSZ1,CSZ1,-CSZ1
-};
-
-GLfloat cube_pos2[CP][3] = {
-	-CSZ2,-0.1,CSZ2, //왼쪽앞아래
-	CSZ2,-0.1,CSZ2, // 오른쪽앞아래
-	CSZ2,-0.1,-CSZ2, //오른쪽뒤아래
-	-CSZ2,-0.1,-CSZ2, //왼쪽뒤아래
-	-CSZ2,CSZ2,CSZ2,
-	CSZ2,CSZ2,CSZ2,
-	CSZ2,CSZ2,-CSZ2,
-	-CSZ2,CSZ2,-CSZ2
-};
-
-GLint cube_index[CI] = {
-	0,1,5,
-	0,5,4,
-	1,2,6,
-	1,6,5,
-	2,3,6,
-	3,7,6,
-	0,7,3,
-	0,4,7,
-	4,5,6,
-	4,6,7,
-	0,2,1,
-	0,3,2,
-};
-
-/*GLint cube_index2[36] = {
-	0,1,5,
-	0,5,4,
-	1,2,6,
-	1,6,5,
-	2,3,6,
-	3,7,6,
-	0,7,3,
-	0,4,7,
-	4,5,6,
-	4,6,7,
-	0,2,1,
-	0,3,2,
-};*/
-
-GLfloat bottom_pos[4][3] = {
-	-BTSZ,0.0,-BTSZ,
-	-BTSZ,0.0,BTSZ,
-	BTSZ,0.0,BTSZ,
-	BTSZ,0.0,-BTSZ
-};
-GLint bottom_index[6] = {
-	0,1,2,
-	0,2,3
-};
-GLfloat grid_color[4][3] = { 0.0f, };
-
-GLfloat cube_color1[CP][3] = {
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f,
-	1.0f,0.0f,0.0f
-};
-
-GLfloat cube_color2[CP][3] = {
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f,
-	1.0f,1.0f,0.0f
-};
-
-glm::mat4 World = glm::mat4(1.0f);
-glm::mat4 R = glm::mat4(1.0f);
-glm::mat4 T = glm::mat4(1.0f);
-
-glm::mat4 Rx = glm::mat4(1.0f);
-glm::mat4 Ry = glm::mat4(1.0f);
-
-glm::mat4 Tx = glm::mat4(1.0f);
-glm::mat4 Ty = glm::mat4(1.0f);
-
-glm::mat4 C2 = glm::mat4(1.0f); //박스 초기위치 조정
-glm::mat4 C2Ty = glm::mat4(1.0f);
+void Mouse(int, int, int, int);
+void MouseMotion(int, int);
+void Keyboard(unsigned char, int, int);
+void TimerFunction(int);
 
-glm::mat4 CL = glm::mat4(1.0f); //실린더 초기위치 조정
-glm::mat4 CLRX = glm::mat4(1.0f);
-glm::mat4 CLTY = glm::mat4(1.0f);
-glm::mat4 CLTX = glm::mat4(1.0f);
-glm::mat4 CLTX2 = glm::mat4(1.0f);
-
-glm::mat4 CR = glm::mat4(1.0f); // 크레인 전체 행렬
-glm::mat4 CRTX = glm::mat4(1.0f);
-
-glm::mat4 CRM = glm::mat4(1.0f); // 크레인 중단부 행렬
-glm::mat4 CRMRY = glm::mat4(1.0f);
-
-glm::mat4 CRA = glm::mat4(1.0f); // 크레인 팔 행렬
-glm::mat4 CRARX = glm::mat4(1.0f);
-glm::mat4 CRATY = glm::mat4(1.0f);
-glm::mat4 CRATZ = glm::mat4(1.0f);
-
-glm::mat4 CRA2 = glm::mat4(1.0f); // 크레인 팔 행렬
-glm::mat4 CRARX2 = glm::mat4(1.0f);
-glm::mat4 CRATY2 = glm::mat4(1.0f);
-glm::mat4 CRATZ2 = glm::mat4(1.0f);
-
-glm::mat4 temp = glm::mat4(1.0f);
-unsigned int modelLocation, projectionLocation, viewLocation;
-
-float randomRGB()
-{
-	random_device rd;
-	mt19937 mt(rd());
-	uniform_int_distribution<int> uid(0, 255);
-	// 255 : uid = 1.0f : x , x = uid / 255 
-	return 1.0f * uid(mt) / 255;
-}
-
-
-char* filetobuf(const char *file)
-{
-	FILE *fptr;
-	long length;
-	char *buf;
-
-	fopen_s(&fptr, file, "rb");
-	if (!fptr) return NULL;
-	fseek(fptr, 0, SEEK_END);
-	length = ftell(fptr);
-	buf = (char*)malloc(length + 1);
-	fseek(fptr, 0, SEEK_SET);
-	fread(buf, length, 1, fptr);
-	fclose(fptr);
-	buf[length] = 0;
-
-	return buf;
-}
-
-GLchar *vertexsource, *fragmentsource;
-GLuint vertexshader, fragmentshader;
-GLuint vao[COUNT], vbo[COUNT][1], ebo[COUNT];
-GLuint s_program;
-
-void make_vertexShader()
-{
-	vertexsource = filetobuf("vertex.glsl");
-
-	vertexshader = glCreateShader(GL_VERTEX_SHADER);
-
-	glShaderSource(vertexshader, 1, (const GLchar**)&vertexsource, 0);
-
-	glCompileShader(vertexshader);
-
-	GLint result;
-	GLchar errorLog[512];
-
-	glGetShaderiv(vertexshader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		glGetShaderInfoLog(vertexshader, 512, NULL, errorLog);
-		cerr << "ERROR : vertex shader 컴파일실패\n" << errorLog << endl;
-
-	}
-}
-void make_fragmentShader()
-{
-	fragmentsource = filetobuf("fragment.glsl");
-
-	fragmentshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(fragmentshader, 1, (const GLchar**)&fragmentsource, 0);
-
-	glCompileShader(fragmentshader);
-
-	GLint result;
-	GLchar errorLog[512];
-
-	glGetShaderiv(fragmentshader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		glGetShaderInfoLog(fragmentshader, 512, NULL, errorLog);
-		cerr << "ERROR : vertex shader 컴파일실패\n" << errorLog << endl;
-
-	}
-}
-
-
-
-void InitShader()
-{
-	make_vertexShader();
-	make_fragmentShader();
-
-	s_program = glCreateProgram();
-
-	glAttachShader(s_program, vertexshader);
-	glAttachShader(s_program, fragmentshader);
-	glLinkProgram(s_program);
-
-	glDeleteShader(vertexshader);
-	glDeleteShader(fragmentshader);
-
-	glUseProgram(s_program);
-}
-
-void InitBuffer()
-{
-
-	for (int i = 0; i < COUNT; i++)
-	{
-		glGenVertexArrays(1, &vao[i]);
-		glBindVertexArray(vao[i]);
-		glGenBuffers(2, vbo[i]);
-
-		//위치
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[i][0]);
-		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(bottom_pos), bottom_pos, GL_STATIC_DRAW);
-		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos), cube_pos, GL_STATIC_DRAW);
-		else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_pos2), cube_pos2, GL_STATIC_DRAW);
-		//else if (i == 3) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		//else if (i == 4) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		//색상
-		/*glBindBuffer(GL_ARRAY_BUFFER, vbo[i][1]);
-		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(grid_color), grid_color, GL_STATIC_DRAW);
-		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color1), cube_color1, GL_STATIC_DRAW);
-		else if (i == 2) glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color2), cube_color2, GL_STATIC_DRAW);
-		//else if (i == 3) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		//else if (i == 4) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);*/
-
-		//EBO 설정
-
-		glGenBuffers(1, &ebo[i]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[i]);
-		if (i == 0) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(bottom_index), bottom_index, GL_STATIC_DRAW);
-		if (i == 1 || i == 2) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_index), cube_index, GL_STATIC_DRAW);
-		//if (i == 2 || i == 3) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-		glEnableVertexAttribArray(0);
-
-
-	}
-
-
-}
-
-/*
-void UpdateBuffer()
-{
-	for (int i = 0; i < COUNT; i++)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[i][0]);
-
-
-		if (i == 0) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-		else if (i == 1) glBufferData(GL_ARRAY_BUFFER, sizeof(), , GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		glEnableVertexAttribArray(0);
-	}
-}*/
-
-void DrawCylinder(GLUquadric* qobj)
-{
-	
-	qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_FILL);
-	gluQuadricNormals(qobj, GLU_SMOOTH);
-	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-	
-	gluCylinder(qobj, 0.03, 0.03, 0.35, 20, 8);
-}
-
-void InitRT()
-{
-	
-
-	R = glm::mat4(1.0f);
-
-	Rx = glm::mat4(1.0f);
-	Ry = glm::mat4(1.0f);
-
-
-	C2Ty = glm::translate(C2Ty, glm::vec3(0.0f, CSZ2*2 , 0.0f));
-
-	CLTY = glm::translate(CLTY, glm::vec3(0.0f, 0.35f+CSZ1+ CSZ2+ 0.1, 0.0f));
-	CLRX = glm::rotate(CLRX,glm::radians(90.0f),glm::vec3(1.0f,0.0f,0.0f));
-	CLTX = glm::translate(CLTX, glm::vec3(-0.1f, 0.0f, 0.0f));
-	CLTX2 = glm::translate(CLTX2, glm::vec3(0.1f, 0.0f, 0.0f));
-	//Rx = glm::rotate(Rx, glm::radians(20.0f), glm::vec3(1.0, 0.0, 0.0));
-	Ry = glm::rotate(Ry, glm::radians(-20.0f), glm::vec3(0.0, 1.0, 0.0));
-
-	R = Rx * Ry;
-	
-
-	
-}
-
-void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정 
-{ //--- 윈도우 생성하기
-	glutInit(&argc, argv); // glut 초기화
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); // 디스플레이 모드 설정
-	glutInitWindowPosition(0, 0); // 윈도우의 위치 지정
-	glutInitWindowSize(WIDTH, HEIGHT); // 윈도우의 크기 지정
-	glutCreateWindow("Example"); // 윈도우 생성(윈도우 이름)
-	//--- GLEW 초기화하기
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK) // glew 초기화
-	{
-		std::cerr << "Unable to initialize GLEW" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	else
-		std::cout << "GLEW Initialized\n";
-
-	InitShader();
-	InitBuffer();
-	InitRT();
-
-
-
+struct sRect {
+	int top, bottom, right, left;
+}sRect;
+
+struct sTopRect {
+	int iX, iY;
+	int iX2, iY2;
+}sTopRect;
+
+struct  sSEMouse {
+	int isX = 0, isY = 0;
+	int ieX = 0, ieY = 0;
+}sSEMouse;
+
+typedef struct  sBottomRect {
+	int iX, iY;
+}sBottomRect;
+
+typedef struct  sWaveRect {
+	float iX, iY;
+}sWaveRect;
+
+typedef struct  sCut {
+	int iWTFRember[5];
+	bool bWTF[5];
+	int iWTF[5];
+	bool bOutRect[5];
+	int iOutRectMove[5];
+	bool bINrect[5];
+	bool bDraw[5];
+	int iX[5], iY[5];
+}sCut;
+
+void vinit();
+void vReset();
+
+void vDrawRect(int, int, int, int);
+void vDrawLines(int, int, int, int);
+void vDrawBasket();
+void vDrawWave();
+void vDrawMouseMotion();
+void vDrawCompeleteRect();
+void vDrawCutRect();
+void vDrawCutRectTwo();
+
+int vCalculateTopBottom(int, int, int, int, int);
+int vCalculateLeftRight(int, int, int, int, int);
+
+void vCalculateXyXy(int, int, int, int, int, int, int, int);
+int iTotalX, iTotalY;
+
+void vCCheck();
+
+void vConfirmCheck(int, int, int, int);
+void vCalculateRect();
+void vCheck();
+
+int iRealBottom = 0, iRealTop = 0, iRealLeft = 0, iRealRight = 0;
+
+
+bool bCreateTopRect = false;
+bool bCreateBottomRect = false;
+bool bCreateWaveRect = false;
+
+bool bMoveRightLeft = false;
+bool bMoveBottomRightLeft = false;
+bool bDontMove = false;
+
+bool bSinCosLeft = false;
+bool bSinCosRight = false;
+
+int iCompare = -1;
+int iComplete = 0;
+int iLeftBye = 21;
+int iRightBye = 31;
+
+int iZ = 0;
+
+bool bDrawMouse = false;
+bool bCalculate = false;
+bool bResetOkay = false;
+
+bool bTopTimer = true;
+bool bBottomTime = true;
+
+bool bStop = false;
+
+sBottomRect sBtmRect[4];
+sWaveRect sWavRect[4];
+sCut sCutRect[2];
+
+void vClipingSort(int, int, struct  sCut[], bool);
+void vClipingCheck(int, int, int, int, int, int, struct  sCut[], bool);
+void vCliping(int, int, struct  sCut[], bool);
+
+
+#define dLimitRect 5
+sCut sCompleteRect[dLimitRect];	// 최대 5개까지 저장
+sCut sClip[dLimitRect];
+void main(int argc, char *argv[]) {
+	//초기화 함수들
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA); // 디스플레이 모드 설정
+	glutInitWindowPosition(100, 100); // 윈도우의 위치지정
+	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
+	glutCreateWindow("WindowsHyun - 2012180004"); // 윈도우 생성 (윈도우 이름)
 	glutDisplayFunc(drawScene); // 출력 함수의 지정
-	glutReshapeFunc(Reshape); // 다시 그리기 함수 지정
-	glutKeyboardFunc(KeyBoard);
-	glutSpecialFunc(ArrowKey);
-	glutMainLoop(); // 이벤트 처리 시작 
+	glutMouseFunc(Mouse);
+	glutMotionFunc(MouseMotion);
+	glutTimerFunc(50, TimerFunction, 0);
+	glutTimerFunc(25, TimerFunction, 1);
+	glutTimerFunc(10, TimerFunction, 2);
+	glutTimerFunc(50, TimerFunction, 3);
+	glutTimerFunc(50, TimerFunction, 4);
+	glutTimerFunc(50, TimerFunction, 5);
+	glutKeyboardFunc(Keyboard);
+	glutReshapeFunc(Reshape);
+	glutMainLoop();
 }
 
-void allinit()
-{
-	World = glm::mat4(1.0f);
-	R = glm::mat4(1.0f);
-	T = glm::mat4(1.0f);
+// 윈도우 출력 함수
+GLvoid drawScene(GLvoid) {
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 바탕색을 'Black' 로 지정
+	glClear(GL_COLOR_BUFFER_BIT); // 설정된 색으로 젂체를 칠하기
 
-	Rx = glm::mat4(1.0f);
-	Ry = glm::mat4(1.0f);
-
-	 Tx = glm::mat4(1.0f);
-	 Ty = glm::mat4(1.0f);
-
-	 C2 = glm::mat4(1.0f); //박스 초기위치 조정
-	 C2Ty = glm::mat4(1.0f);
-
-	 CL = glm::mat4(1.0f); //실린더 초기위치 조정
-	CLRX = glm::mat4(1.0f);
-	CLTY = glm::mat4(1.0f);
-	CLTX = glm::mat4(1.0f);
-	CLTX2 = glm::mat4(1.0f);
-
-	CR = glm::mat4(1.0f); // 크레인 전체 행렬
-	CRTX = glm::mat4(1.0f);
-
-	CRM = glm::mat4(1.0f); // 크레인 중단부 행렬
-	CRMRY = glm::mat4(1.0f);
-
-	CRA = glm::mat4(1.0f); // 크레인 팔 행렬
-	CRARX = glm::mat4(1.0f);
-	CRATY = glm::mat4(1.0f);
-	CRATZ = glm::mat4(1.0f);
-
-	CRA2 = glm::mat4(1.0f); // 크레인 팔 행렬
-	CRARX2 = glm::mat4(1.0f);
-	CRATY2 = glm::mat4(1.0f);
-	CRATZ2 = glm::mat4(1.0f);
-
-	temp = glm::mat4(1.0f);
-}
-
-
-GLvoid ArrowKey(int key, int x, int y)
-{
-
-	if (key == GLUT_KEY_DOWN)
-	{
-		Ty = glm::translate(Ty, glm::vec3(0.0, -0.5, 0.0));
+	vinit();
+	if (bDontMove == false) {
+		vDrawRect(sTopRect.iX, sTopRect.iY, sTopRect.iX2, sTopRect.iY2);
 	}
-	if (key == GLUT_KEY_UP)
-	{
-		Ty = glm::translate(Ty, glm::vec3(0.0, 0.5, 0.0));
+	vDrawBasket();
+	vDrawWave();
+	vDrawMouseMotion();
 
-	}
-	if (key == GLUT_KEY_LEFT)
-	{
-		Tx = glm::translate(Tx, glm::vec3(-0.5, 0.0, 0.0));
-	}
-	if (key == GLUT_KEY_RIGHT)
-	{
-		Tx = glm::translate(Tx, glm::vec3(0.5, 0.0, 0.0));
-	}
+	if (bCalculate == true) {
+		int iBottomX, iTopX;
+		int iLeftY, iRightY;
+		// 직선의 그래프 구하는방법
+		iBottomX = vCalculateTopBottom(sSEMouse.isY, sSEMouse.ieY, sSEMouse.isX, sSEMouse.ieX, sTopRect.iY);
+		iTopX = vCalculateTopBottom(sSEMouse.isY, sSEMouse.ieY, sSEMouse.isX, sSEMouse.ieX, sTopRect.iY2);
+		iLeftY = vCalculateLeftRight(sSEMouse.isY, sSEMouse.ieY, sSEMouse.isX, sSEMouse.ieX, sTopRect.iX);
+		iRightY = vCalculateLeftRight(sSEMouse.isY, sSEMouse.ieY, sSEMouse.isX, sSEMouse.ieX, sTopRect.iX2);
+		iRealBottom = 0, iRealTop = 0, iRealLeft = 0, iRealRight = 0;
+		vConfirmCheck(iLeftY, iRightY, iTopX, iBottomX);
 
-	T = Tx * Ty;
-
-	glutPostRedisplay();
-}
-
-GLvoid KeyBoard(unsigned char key, int x, int y)
-{
-
-	if (key == '1') select = 0;
-	if (key == '2') select = 1;
-
-
-
-	if (key == 'w') {
-		if(w == false)w = true;
-		else w = false;
-	}
-	
-
-	if (key == 'h') {
-		if (!h)
-		{
-			h = true;
-
-
+		if (iRealBottom == 0 && iRealTop == 0 && iRealLeft == 0 && iRealRight == 0) {
+			printf("아무것도 충돌 하지 않음..!\n");
 		}
-		else
-		{
-			h = false;
+		else {
+			//충돌을 하였으니 자르자
+			bDontMove = true;
+			vCheck();
+		}
 
+		bCalculate = false;
+	}
 
+	vDrawCompeleteRect();
+
+	glPushMatrix();
+	if (bSinCosLeft == true || bSinCosRight == true) {
+		glRotatef(iZ, 0.0, 0.0, 1.0);
+		if (bSinCosLeft == true) {
+			glTranslated(-iZ * 5, 0, 0);
+		}
+		if (bSinCosRight == true) {
+			glTranslated(-iZ * 10, 0, 0);
 		}
 	}
-	if (key == 'z') {
-		projTZ = glm::translate(projTZ, glm::vec3(0.0f, 0.0f, 0.5f));
+	if (iCompare == 1) {
+		vDrawCutRectTwo();
 	}
-	if (key == 'Z') {
-		projTZ = glm::translate(projTZ, glm::vec3(0.0f, 0.0f, -0.5f));
+	else {
+		vDrawCutRect();
 	}
-	if (key == 'x') {
-		projTZ = glm::translate(projTZ, glm::vec3(0.5f, 0.0f, 0.0f));
+	glPopMatrix();
+
+	if (iCompare == 1) {
+		vDrawCutRect();
 	}
-	if (key == 'X') {
-		projTZ = glm::translate(projTZ, glm::vec3(-0.5f, 0.0f, 0.0f));
+	else {
+		vDrawCutRectTwo();
 	}
+
+	for (int i = 0; i < dLimitRect; ++i) {
+		for (int j = 0; j < 5; ++j) {
+			glBegin(GL_POLYGON);
+			glColor3f(1.0f, 0.0f, 0.0f);
+			glVertex2i(sClip[i].iX[j], sClip[i].iY[j]);
+		}
+		glEnd();
+	}
+
+	glFlush(); // 화면에 출력하기
+}
+
+void TimerFunction(int value) {
+	glutPostRedisplay(); // 화면 재 출력
+
+	switch (value) {
+	case 0:
+		if (bDontMove == false) {
+			if (bMoveRightLeft == false) {
+				// Right
+				sTopRect.iX += 4;
+				sTopRect.iX2 += 4;
+				if (sTopRect.iX2 >= 775) {
+					bMoveRightLeft = true;
+				}
+			}
+			else {
+				//Left
+				sTopRect.iX -= 4;
+				sTopRect.iX2 -= 4;
+				if (sTopRect.iX <= 25) {
+					bMoveRightLeft = false;
+				}
+			}
+		}
+		else {
+			int imoveRect = 0;
+			if (bMoveRightLeft == false) {
+				for (int i = 0; i < 5; ++i) {
+					if (iCompare == 0) {
+						imoveRect = 1;
+					}
+					else {
+						imoveRect = 0;
+					}
+					sCutRect[imoveRect].iX[i] += 7;
+				}
+			}
+			else {
+				for (int i = 0; i < 5; ++i) {
+					if (iCompare == 0) {
+						imoveRect = 1;
+					}
+					else {
+						imoveRect = 0;
+					}
+					sCutRect[imoveRect].iX[i] -= 7;
+				}
+			}
+		}
+		if (bTopTimer == true) {
+			glutTimerFunc(50, TimerFunction, 0); // 타이머함수 재 설정
+		}
+		break;
+
+	case 1:
+		if (bMoveBottomRightLeft == false) {
+			for (int i = 0; i < 4; ++i) {
+				sBtmRect[i].iX += 4;
+				sWavRect[i].iX += 4;
+			}
+
+			for (int k = 0; k < dLimitRect; ++k) {
+				for (int j = 0; j < 5; ++j) {
+					if (sCompleteRect[k].iX[j] != 0) {
+						sCompleteRect[k].iX[j] += 4;
+					}
+				}
+			}
+
+			for (int k = 0; k < dLimitRect; ++k) {
+				for (int j = 0; j < 5; ++j) {
+					if (sClip[k].bWTF[0] == true) {
+						sClip[k].iX[j] += 4;
+					}
+				}
+			}
+
+			sWavRect[0].iY -= 0.3;
+			sWavRect[3].iY += 0.3;
+			if (sBtmRect[3].iX >= 765) {
+				bMoveBottomRightLeft = true;
+			}
+		}
+		else {
+			for (int i = 0; i < 4; ++i) {
+				sBtmRect[i].iX -= 4;
+				sWavRect[i].iX -= 4;
+			}
+
+			for (int k = 0; k < dLimitRect; ++k) {
+				for (int j = 0; j < 5; ++j) {
+					if (sCompleteRect[k].iX[j] != 0) {
+						sCompleteRect[k].iX[j] -= 4;
+					}
+				}
+			}
+
+			for (int k = 0; k < dLimitRect; ++k) {
+				for (int j = 0; j < 5; ++j) {
+					if (sClip[k].bWTF[0] == true) {
+						sClip[k].iX[j] -= 4;
+					}
+				}
+			}
+
+			sWavRect[0].iY += 0.3;
+			sWavRect[3].iY -= 0.3;
+			if (sBtmRect[0].iX <= 35) {
+				bMoveBottomRightLeft = false;
+			}
+		}
+
+		if (bBottomTime == true) {
+			glutTimerFunc(25, TimerFunction, 1); // 타이머함수 재 설정
+		}
+		break;
+
+	case 2:
+
+		if (bStop == false) {
+			if (iCompare != 0 || iCompare != 3) {
+				for (int i = 0; i < 5; ++i) {
+
+					if (iCompare == 0 || iCompare == 1) {
+						sCutRect[iCompare].iY[i] -= 1;
+					}
+				}
+				if (iCompare == 0 || iCompare == 1) {
+					vCCheck();
+				}
+			}
+		}
+		glutTimerFunc(10, TimerFunction, 2); // 타이머함수 재 설정
+		break;
+
+	case 3:
+		if (bSinCosLeft == true) {
+			if (iLeftBye <= 50) {
+				iZ += 1.0;
+				printf("%d, ", iZ);
+				iLeftBye += 1;
+				if (iLeftBye == 50) {
+					vReset();
+				}
+			}
+		}
+		glutTimerFunc(50, TimerFunction, 3); // 타이머함수 재 설정
+		break;
+
+	case 4:
+		if (bSinCosRight == true) {
+			if (iRightBye <= 60) {
+				iZ -= 1.0;
+				iRightBye += 1;
+				if (iRightBye == 60) {
+					vReset();
+				}
+			}
+		}
+		glutTimerFunc(50, TimerFunction, 4); // 타이머함수 재 설정
+		break;
+
+	case 5:
+		for (int i = 0; i < dLimitRect; ++i) {
+			vClipingSort(i, i, sCompleteRect, false);
+		}
+		//------------------------------------------------------------------------------------
+		for (int k = 0; k < iComplete; ++k) {
+			int iClipDataY[dLimitRect];
+			int iClipDataLocationY[dLimitRect];
+
+			for (int i = 0; i < dLimitRect; ++i) {
+				iClipDataY[i] = sCompleteRect[k].iY[i];
+				iClipDataLocationY[i] = i;
+			}
+
+			for (int i = 0; i < dLimitRect - 1; i++) {
+				for (int j = 0; j < dLimitRect - 1; j++) {
+					if (iClipDataY[j] > iClipDataY[j + 1]) {
+						int temp = iClipDataY[j];
+						iClipDataY[j] = iClipDataY[j + 1];
+						iClipDataY[j + 1] = temp;
+						temp = iClipDataLocationY[j];
+						iClipDataLocationY[j] = iClipDataLocationY[j + 1];
+						iClipDataLocationY[j + 1] = temp;
+					}
+				}
+			}
+			int iWavY = sWavRect[0].iY;
+			int iWavY2 = sWavRect[3].iY;
+			if (sCompleteRect[k].iY[iClipDataLocationY[4]] < ((iWavY + iWavY2) / 2) - 10) {
+				for (int i = 0; i < dLimitRect; ++i) {
+					sClip[k].iX[i] = sCompleteRect[k].iX[i];
+					sClip[k].iY[i] = sCompleteRect[k].iY[i];
+				}
+			}
+		}
+		//------------------------------------------------------------------------------------
+		glutTimerFunc(50, TimerFunction, 5); // 타이머함수 재 설정
+		break;
+	}
+}
+
+void Keyboard(unsigned char key, int x, int y) {
+	glutPostRedisplay(); // 화면 재 출력
+	printf("InPut Key = %c\n", key);
+
 	if (key == 'r') {
-		projRY = glm::rotate(projRY,glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		vReset();
 	}
-	if (key == 'R') {
-		projRY = glm::rotate(projRY, glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-	if (key == 'b') CRTX = glm::translate(CRTX, glm::vec3(0.1f, 0.0f, 0.0f));
-	if (key == 'B') CRTX = glm::translate(CRTX, glm::vec3(-0.1f, 0.0f, 0.0f));
-	if ( key == 'm' || key == 'M' || key == 't' || key == 'T' || key == 'O')
-	{
-		if (stop == true)
-		{
-			stop = false;
-			glutTimerFunc(t, TimerFunction, 1);
+
+	if (key == 't') {
+		if (bTopTimer == true) {
+			bTopTimer = false;
 		}
-		
-		if (key == 'm') m = 1;
-		if (key == 'M') m = -1;
-		if (key == 't') a = 1;
-		if (key == 'T') a = -1;
+		else {
+			bTopTimer = true;
+			glutTimerFunc(50, TimerFunction, 0); // 타이머함수 재 설정
+		}
 	}
-	if (key == 's' || key == 'S')
-	{
-		stop = true;
+
+	if (key == 'b') {
+		if (bBottomTime == true) {
+			bBottomTime = false;
+		}
+		else {
+			bBottomTime = true;
+			glutTimerFunc(25, TimerFunction, 1); // 타이머함수 재 설정
+		}
 	}
-	if (key == 'c' || key == 'C')
-	{
-		select = 0, t = 100, m = 0, a = 0, delta_time = 0, delta_time2 = 0, state = 0;
-		stop = true;
-		allinit();
-		InitRT();
+
+	if (key == 'f') {
+		if (bTopTimer == false) {
+			glutTimerFunc(50, TimerFunction, 0); // 타이머함수 재 설정
+		}
 	}
-	if (key == 'q' || key == 'Q')
-	{
-		exit(0);
+
+	if (key == 'g') {
+		if (bBottomTime == false) {
+			glutTimerFunc(25, TimerFunction, 1); // 타이머함수 재 설정
+		}
 	}
-	glutPostRedisplay();
+
+	if (key == 'z') {
+		iZ += 1.0;
+	}
+	else if (key == 'Z') {
+		iZ -= 1.0;
+	}
+	//printf("X : %d, X2 : %d\n", sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iX[iRealBottomX2]);
+	//printf("left : %d, right : %d, top : %d, bottom : %d\n", iLeftY, iRightY, iTopX, iBottomX);
 }
 
-void Rotate()
-{
-	CRMRY = glm::rotate(CRMRY, glm::radians(m*10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+void Mouse(int button, int state, int x, int y) {
+	//---------------------------------------------------------------------
+	// y값이 반전 출력으로 인하여 전체값에서 y를 빼줌
+	y = sRect.right - y;
+	// 혹시라도 마이너스 값이 있을수 있으니 해당 마이너스 부분은 다시 플러스로 변경.
+	if (y >= 0) {
+		-y;
+	}
+	//---------------------------------------------------------------------
 
-	CRARX = glm::rotate(CRARX, glm::radians(a*7.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	CRARX2 = glm::rotate(CRARX2, glm::radians(a*-7.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-}
-void Translate()
-{
-	CRATZ = glm::translate(CRATZ, glm::vec3(0.0f, 0.0f, a*0.035f));
-	CRATY = glm::translate(CRATY, glm::vec3(0.0f, a*-0.02f, 0.0f));
-
-	CRATZ2 = glm::translate(CRATZ2, glm::vec3(0.0f, 0.0f, a*-0.035f));
-	CRATY2 = glm::translate(CRATY2, glm::vec3(0.0f, a*-0.02f, 0.0f));
-}
-
-
-
-GLvoid TimerFunction(int value)
-{
-	if (stop) return;
-
-	if(m!= 0) delta_time++;
-	if (a!= 0) delta_time2++;
-	if (delta_time % 10 == 0)
-	{
-		delta_time = 0;
-		m = 0;
-		
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		if (sSEMouse.ieX != 0 && sSEMouse.ieY != 0) {
+			sSEMouse.ieX = 0, sSEMouse.ieY = 0;
+		}
+		bCalculate = false;
+		bDrawMouse = true;
+		sSEMouse.isX = x;
+		sSEMouse.isY = y;
+		//printf("Start = (%d, %d)\n", x, y);
+	}
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+		bCalculate = true;
+		bDrawMouse = true;
+		sSEMouse.ieX = x;
+		sSEMouse.ieY = y;
+		//printf("End = (%d, %d)\n", x, y);
+		printf("(%d, %d) -> (%d, %d)\n", sSEMouse.isX, sSEMouse.isY, sSEMouse.ieX, sSEMouse.ieY);
 	}
 
-	if (a != 0)
-	{
-		if (delta_time2 % 10 == 0 && (state == 0))
-		{
-			a = -1;
-			state = 1;
-
-		}
-		else if (delta_time2 % 10 == 0 && state == 1)
-		{
-			a = 1;
-			state = 2;
-		}
-		else if (delta_time2 % 10 == 0 && state == 2)
-		{
-			a = -1;
-			state = 3;
-		}
-		else if (delta_time2 % 10 == 0 && state == 3)
-		{
-			a = 1;
-			state = 0;
-		}
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		printf("End = (%d, %d)\n", x, y);
+		//printf("(%d, %d) -> (%d, %d)\n", sSEMouse.isX, sSEMouse.isY, sSEMouse.ieX, sSEMouse.ieY);
 	}
-	
-	
-	
-	Rotate();
-	Translate();
-
-	glutPostRedisplay();
-	glutTimerFunc(t, TimerFunction, 1);
 }
 
-GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수 
-{
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
-	// 그리기 부분 구현
-	//--- 그리기 관련 부분이 여기에 포함된다.
-	glUseProgram(s_program);
-	int vColorLocation = glGetUniformLocation(s_program, "outColor");
-
-	view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
-	viewLocation = glGetUniformLocation(s_program, "viewTransform");
-
-	projection = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 50.0f);
-	projection = projection * projTZ * projTX * projRY;
-	projectionLocation = glGetUniformLocation(s_program, "projectionTransform");
-
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-
-	if (!w)glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	else glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	if (h)glEnable(GL_DEPTH_TEST);
-	else glDisable(GL_DEPTH_TEST);
-
-	modelLocation = glGetUniformLocation(s_program, "modelTransform");
-
-
-	//스자이공부
-
-	
-	World = R * T;
-
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World));
-
-	CR = CRTX;
-
-	C2 = C2Ty;
-
-	CRM = CRMRY;
-
-	CRA = CRATZ * CRATY  ;
-	CRA2 = CRATZ2 * CRATY2;
-	for (int i = 0; i < COUNT; i++)
-	{
-		glBindVertexArray(vao[i]);
-		if(i == 0)glUniform4f(vColorLocation, 0.3f, 0.3f, 0.3f, 1.0); // 바닥
-		if (i == 1)
-		{
-			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World * CR));
-			glUniform4f(vColorLocation, 1.0f, 0.0f, 0.0f, 1.0);
-		}
-		if (i == 2) {
-			glUniform4f(vColorLocation, 1.0f, 1.0f, 0.0f, 1.0);
-			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World * CR * CRM * C2 ));
-		}
-		glDrawElements(GL_TRIANGLES, CI, GL_UNSIGNED_INT, 0);
+void MouseMotion(int x, int y) {
+	//---------------------------------------------------------------------
+	// y값이 반전 출력으로 인하여 전체값에서 y를 빼줌
+	y = sRect.right - y;
+	// 혹시라도 마이너스 값이 있을수 있으니 해당 마이너스 부분은 다시 플러스로 변경.
+	if (y >= 0) {
+		-y;
 	}
-
-	CL = CLTY * CLRX;
-	//glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr( CL));
-	glUniform4f(vColorLocation, 0.0f, 1.0f, 1.0f, 1.0);
-
-	if(state == 0 || state == 1)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA * CL * CLTX * CRARX));
-	else if(state ==2 || state ==3)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA2 * CL * CLTX * CRARX2));
-	DrawCylinder(qobj);
-	if (state == 0 || state == 1)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA2 * CL * CLTX2* CRARX2));
-	else if(state == 2 || state == 3)glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(World* CR * CRM * CRA * CL * CLTX2* CRARX));
-	DrawCylinder(qobj2);
-
-	glutSwapBuffers(); // 화면에 출력하기
-
+	//---------------------------------------------------------------------
+	if (bDrawMouse == true) {
+		sSEMouse.ieX = x;
+		sSEMouse.ieY = y;
+	}
 }
-GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수 
-{
+
+GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, w, h);
+	glLoadIdentity();
+	glOrtho(0.0, 800.0, 0.0, 600.0, -1.0, 1.0);
+	sRect.bottom = 0, sRect.top = 800, sRect.left = 0, sRect.right = 600;
+	glutPostRedisplay(); // 화면 재 출력
+}
+
+void vinit() {
+	//---------------------------------------------------------------------
+	srand((unsigned)time(NULL));
+	if (bCreateTopRect == false) {
+		sTopRect.iX = 25;
+		sTopRect.iY = rand() % 110 + 400;
+		sTopRect.iX2 = rand() % 110 + 50;
+		sTopRect.iY2 = 540;
+		//2printf("(%d, %d) (%d, %d)", sTopRect.iX, sTopRect.iY, sTopRect.iX2, sTopRect.iY2);
+		bCreateTopRect = true;
+	}
+
+	if (bCreateBottomRect == false) {
+		sBtmRect[0].iX = 35;
+		sBtmRect[0].iY = 150;
+		sBtmRect[1].iX = 35;
+		sBtmRect[1].iY = 40;
+		sBtmRect[2].iX = 190;
+		sBtmRect[2].iY = 40;
+		sBtmRect[3].iX = 190;
+		sBtmRect[3].iY = 150;
+		bCreateBottomRect = true;
+	}
+
+	if (bCreateWaveRect == false) {
+		sWavRect[0].iX = 35;
+		sWavRect[0].iY = 120;
+		sWavRect[1].iX = 35;
+		sWavRect[1].iY = 42;
+		sWavRect[2].iX = 189;
+		sWavRect[2].iY = 42;
+		sWavRect[3].iX = 189;
+		sWavRect[3].iY = 90;
+
+
+
+		bCreateWaveRect = true;
+	}
+
+
+	//---------------------------------------------------------------------
+}
+
+void vReset() {
+	//---------------------------------------------------------------------
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 5; ++j) {
+			sCutRect[i].iX[j] = 0;
+			sCutRect[i].iY[j] = 0;
+			sCutRect[i].bINrect[j] = false;
+			sCutRect[i].bDraw[j] = false;
+			sCutRect[i].bOutRect[j] = false;
+			sCutRect[i].iOutRectMove[j] = -1;
+			sCutRect[i].bWTF[j] = false;
+			sCutRect[i].iWTF[j] = 0;
+		}
+	}
+	bSinCosLeft = false;
+	bSinCosRight = false;
+	iZ = 0.0;
+	iRealBottom = 0, iRealTop = 0, iRealLeft = 0, iRealRight = 0;
+	iRightBye = 31;
+	iLeftBye = 21;
+	if (bDontMove == true) {
+		bDontMove = false;
+	}
+
+	if (bStop == true) {
+		bStop = false;
+	}
+	sSEMouse.ieX = 0, sSEMouse.isX = 0;
+	sSEMouse.ieY = 0, sSEMouse.isY = 0;
+	iCompare = -1;
+	bCreateTopRect = false;
+	//---------------------------------------------------------------------
+}
+
+void vDrawRect(int iX, int iY, int iX2, int iY2) {
+	//---------------------------------------------------------------------
+	glColor3f(255, 0, 0); // 그리기 색을 'Red' 으로 지정
+	glRecti(iX, iY, iX2, iY2); // 사각형 그리기 (x1, y1, x2, y2)
+	//---------------------------------------------------------------------
+}
+
+void vDrawLines(int isX, int isY, int isX2, int isY2) {
+	//---------------------------------------------------------------------
+	glBegin(GL_LINES); // 선
+	glColor3f(1.0f, 1.0f, 1.0f); // 그리기 색을 'White' 으로 지정
+	glVertex2i(isX, isY);
+	glVertex2i(isX2, isY2);
+	glEnd();
+	//---------------------------------------------------------------------
+}
+
+void vDrawBasket() {
+	//---------------------------------------------------------------------
+	vDrawLines(sBtmRect[0].iX, sBtmRect[0].iY, sBtmRect[1].iX, sBtmRect[1].iY);
+	vDrawLines(sBtmRect[1].iX, sBtmRect[1].iY, sBtmRect[2].iX, sBtmRect[2].iY);
+	vDrawLines(sBtmRect[2].iX, sBtmRect[2].iY, sBtmRect[3].iX, sBtmRect[3].iY);
+	//---------------------------------------------------------------------
+}
+
+void vDrawWave() {
+	//---------------------------------------------------------------------
+	glBegin(GL_POLYGON);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	for (int i = 0; i < 4; ++i) {
+		glVertex2i(sWavRect[i].iX, sWavRect[i].iY);
+	}
+	glEnd();
+	//---------------------------------------------------------------------
+}
+
+void vDrawMouseMotion() {
+	//---------------------------------------------------------------------
+	if (bDrawMouse == true) {
+		if (sSEMouse.ieX == 0 && sSEMouse.ieY == 0) {
+			vDrawLines(sSEMouse.isX, sSEMouse.isY, sSEMouse.isX, sSEMouse.isY);
+		}
+		else {
+			vDrawLines(sSEMouse.isX, sSEMouse.isY, sSEMouse.ieX, sSEMouse.ieY);
+		}
+	}
+	//---------------------------------------------------------------------
+}
+
+void vDrawCompeleteRect() {
+	//---------------------------------------------------------------------
+	for (int i = 0; i < dLimitRect; ++i) {
+		if (sCompleteRect[i].bDraw[i] == true) {
+			for (int j = 0; j < 5; ++j) {
+				glBegin(GL_POLYGON);
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glVertex2i(sCompleteRect[i].iX[j], sCompleteRect[i].iY[j]);
+			}
+			glEnd();
+		}
+	}
+	//---------------------------------------------------------------------
+}
+
+void vDrawCutRect() {
+	int i = 0;
+
+	glBegin(GL_POLYGON);
+	if (i == 0) {
+		glColor3f(1.0f, 0.0f, 1.0f);
+	}
+	else {
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
+	for (int j = 0; j < 5; ++j) {
+		glVertex2i(sCutRect[i].iX[j], sCutRect[i].iY[j]);
+	}
+	glEnd();
+
+}
+
+void vDrawCutRectTwo() {
+	int i = 1;
+	glBegin(GL_POLYGON);
+	if (i == 0) {
+		glColor3f(1.0f, 0.0f, 1.0f);
+	}
+	else {
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
+	for (int j = 0; j < 5; ++j) {
+		glVertex2i(sCutRect[i].iX[j], sCutRect[i].iY[j]);
+	}
+	glEnd();
+
+}
+
+int vCalculateTopBottom(int MouseStartY, int MouseEndY, int MouseStartX, int MouseEndX, int TopRextY) {
+	//printf("\n");
+	float fTop = MouseStartY - MouseEndY;
+	//printf("기울기 위 : %f\n", fTop);
+	float  fBottom = MouseStartX - MouseEndX;
+	//printf("기울기 아래 : %f\n", fBottom);
+	float fM = fTop / fBottom;
+	//printf("기울기 결과 : %f\n", fM);
+	float fC2 = fM * MouseEndX;
+	float fC = MouseEndY - fC2;
+	int iResult = TopRextY - fC;
+	iResult /= fM;
+
+	return iResult;
+	//printf("결과다 : %d\n", iResult);
+}
+
+int vCalculateLeftRight(int MouseStartY, int MouseEndY, int MouseStartX, int MouseEndX, int TopRextX) {
+	//printf("\n");
+	float fTop = MouseStartY - MouseEndY;
+	//printf("기울기 위 : %f\n", fTop);
+	float  fBottom = MouseStartX - MouseEndX;
+	//printf("기울기 아래 : %f\n", fBottom);
+	float fM = fTop / fBottom;
+	float fC2 = fM * MouseEndX;
+	float fC = MouseEndY - fC2;
+	int iResult = TopRextX * fM;
+	iResult += fC;
+	return iResult;
+}
+
+void vCalculateXyXy(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+	int iTopXM = ((x1*y2) - (y1*x2))*(x3 - x4);
+	int iTopXM2 = (x1 - x2)*((x3*y4) - (y3*x4));
+	int iBottomXM = (x1 - x2)*(y3 - y4);
+	int iBottomXM2 = (y1 - y2)*(x3 - x4);
+
+	iTotalX = (iTopXM - iTopXM2) / (iBottomXM - iBottomXM2);
+
+	int iTopYM = ((x1*y2) - (y1*x2))*(y3 - y4);
+	int iTopYM2 = (y1 - y2)*((x3*y4) - (y3*x4));
+	int iBottomYM = (x1 - x2)*(y3 - y4);
+	int iBottomYM2 = (y1 - y2)*(x3 - x4);
+
+	iTotalY = (iTopYM - iTopYM2) / (iBottomYM - iBottomYM2);
+}
+
+void vConfirmCheck(int iLeftY, int iRightY, int iTopX, int iBottomX) {
+	if (iLeftY >= sTopRect.iY && iLeftY <= sTopRect.iY2) {
+		//2printf("왼쪽 : (%d, %d)\n", sTopRect.iX, iLeftY);
+		iRealLeft = iLeftY;
+	}
+
+	if (iRightY >= sTopRect.iY && iRightY <= sTopRect.iY2) {
+		//2printf("오른쪽 : (%d, %d)\n", sTopRect.iX2, iRightY);
+		iRealRight = iRightY;
+	}
+
+	if (iTopX >= sTopRect.iX && iTopX <= sTopRect.iX2) {
+		//2printf("위 : (%d, %d)\n", iTopX, sTopRect.iY2);
+		iRealTop = iTopX;
+	}
+
+	if (iBottomX >= sTopRect.iX && iBottomX <= sTopRect.iX2) {
+		//2printf("아래 : (%d, %d)\n", iBottomX, sTopRect.iY);
+		iRealBottom = iBottomX;
+	}
+}
+
+void vCheck() {
+	if (iRealTop != 0 && iRealBottom != 0) {
+		// 둘다 사각형
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = sTopRect.iY2;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = sTopRect.iY;
+		sCutRect[0].iX[2] = iRealBottom;
+		sCutRect[0].iY[2] = sTopRect.iY;
+		sCutRect[0].iX[3] = iRealTop;
+		sCutRect[0].iY[3] = sTopRect.iY2;
+		sCutRect[0].iX[4] = iRealTop;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		if (sCutRect[0].iX[2] >= sCutRect[0].iX[3]) {
+			sCutRect[0].iWTF[0] = 11;
+		}
+		else {
+			sCutRect[0].iWTF[0] = 12;
+		}
+		//--------------------------------------------
+		sCutRect[1].iX[0] = iRealTop;
+		sCutRect[1].iY[0] = sTopRect.iY2;
+		sCutRect[1].iX[1] = iRealBottom;
+		sCutRect[1].iY[1] = sTopRect.iY;
+		sCutRect[1].iX[2] = sTopRect.iX2;
+		sCutRect[1].iY[2] = sTopRect.iY;
+		sCutRect[1].iX[3] = sTopRect.iX2;
+		sCutRect[1].iY[3] = sTopRect.iY2;
+		sCutRect[1].iX[4] = sTopRect.iX2;
+		sCutRect[1].iY[4] = sTopRect.iY2;
+		if (sCutRect[1].iX[0] >= sCutRect[1].iX[1]) {
+			sCutRect[1].iWTF[0] = 13;
+		}
+		else {
+			sCutRect[1].iWTF[0] = 14;
+		}
+
+		//--------------------------------------------
+		iCompare = 3; //계산 해야한다.
+	}
+	else if (iRealTop != 0 && iRealRight != 0) {
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = sTopRect.iY2;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = sTopRect.iY;
+		sCutRect[0].iX[2] = sTopRect.iX2;
+		sCutRect[0].iY[2] = sTopRect.iY;
+		sCutRect[0].iX[3] = sTopRect.iX2;
+		sCutRect[0].iY[3] = iRealRight;
+		sCutRect[0].iX[4] = iRealTop;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		sCutRect[0].iWTF[0] = 6;
+		//--------------------------------------------
+		sCutRect[1].iX[0] = iRealTop;
+		sCutRect[1].iY[0] = sTopRect.iY2;
+		sCutRect[1].iX[1] = sTopRect.iX2;
+		sCutRect[1].iY[1] = iRealRight;
+		sCutRect[1].iX[2] = sTopRect.iX2;
+		sCutRect[1].iY[2] = sTopRect.iY2;
+		sCutRect[1].iX[3] = sTopRect.iX2;
+		sCutRect[1].iY[3] = sTopRect.iY2;
+		sCutRect[1].iX[4] = sTopRect.iX2;
+		sCutRect[1].iY[4] = sTopRect.iY2;
+		sCutRect[1].iWTF[0] = 5;
+		//--------------------------------------------
+		iCompare = 1; //1번이 작다.
+	}
+	else if (iRealBottom != 0 && iRealRight != 0) {
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = sTopRect.iY2;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = sTopRect.iY;
+		sCutRect[0].iX[2] = iRealBottom;
+		sCutRect[0].iY[2] = sTopRect.iY;
+		sCutRect[0].iX[3] = sTopRect.iX2;
+		sCutRect[0].iY[3] = iRealRight;
+		sCutRect[0].iX[4] = sTopRect.iX2;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		sCutRect[0].iWTF[0] = 6;
+		//--------------------------------------------
+		sCutRect[1].iX[0] = iRealBottom;
+		sCutRect[1].iY[0] = sTopRect.iY;
+		sCutRect[1].iX[1] = sTopRect.iX2;
+		sCutRect[1].iY[1] = sTopRect.iY;
+		sCutRect[1].iX[2] = sTopRect.iX2;
+		sCutRect[1].iY[2] = iRealRight;
+		sCutRect[1].iX[3] = sTopRect.iX2;
+		sCutRect[1].iY[3] = iRealRight;
+		sCutRect[1].iX[4] = sTopRect.iX2;
+		sCutRect[1].iY[4] = iRealRight;
+		sCutRect[1].iWTF[0] = 2;
+		//--------------------------------------------
+		iCompare = 1; //1번이 작다.
+	}
+	else if (iRealTop != 0 && iRealLeft != 0) {
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = iRealLeft;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = sTopRect.iY;
+		sCutRect[0].iX[2] = sTopRect.iX2;
+		sCutRect[0].iY[2] = sTopRect.iY;
+		sCutRect[0].iX[3] = sTopRect.iX2;
+		sCutRect[0].iY[3] = sTopRect.iY2;
+		sCutRect[0].iX[4] = iRealTop;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		sCutRect[0].iWTF[0] = 6;
+		//--------------------------------------------
+		sCutRect[1].iX[0] = sTopRect.iX;
+		sCutRect[1].iY[0] = sTopRect.iY2;
+		sCutRect[1].iX[1] = sTopRect.iX;
+		sCutRect[1].iY[1] = iRealLeft;
+		sCutRect[1].iX[2] = iRealTop;
+		sCutRect[1].iY[2] = sTopRect.iY2;
+		sCutRect[1].iX[3] = iRealTop;
+		sCutRect[1].iY[3] = sTopRect.iY2;
+		sCutRect[1].iX[4] = iRealTop;
+		sCutRect[1].iY[4] = sTopRect.iY2;
+		sCutRect[1].iWTF[0] = 4;
+		//--------------------------------------------
+		iCompare = 1; //1번이 작다.
+	}
+	else if (iRealRight != 0 && iRealLeft != 0) {
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = sTopRect.iY2;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = iRealLeft;
+		sCutRect[0].iX[2] = sTopRect.iX2;
+		sCutRect[0].iY[2] = iRealRight;
+		sCutRect[0].iX[3] = sTopRect.iX2;
+		sCutRect[0].iY[3] = sTopRect.iY2;
+		sCutRect[0].iX[4] = sTopRect.iX2;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		if (sCutRect[0].iY[1] >= sCutRect[0].iY[2]) {
+			sCutRect[0].iWTF[0] = 15;
+		}
+		else {
+			sCutRect[0].iWTF[0] = 16;
+		}
+		//--------------------------------------------
+		sCutRect[1].iX[0] = sTopRect.iX;
+		sCutRect[1].iY[0] = iRealLeft;
+		sCutRect[1].iX[1] = sTopRect.iX;
+		sCutRect[1].iY[1] = sTopRect.iY;
+		sCutRect[1].iX[2] = sTopRect.iX2;
+		sCutRect[1].iY[2] = sTopRect.iY;
+		sCutRect[1].iX[3] = sTopRect.iX2;
+		sCutRect[1].iY[3] = iRealRight;
+		sCutRect[1].iX[4] = sTopRect.iX2;
+		sCutRect[1].iY[4] = iRealRight;
+		if (sCutRect[1].iY[0] >= sCutRect[1].iY[3]) {
+			sCutRect[1].iWTF[0] = 17;
+		}
+		else {
+			sCutRect[1].iWTF[0] = 18;
+		}
+		//--------------------------------------------
+		iCompare = 4; //계산이 필요하다.
+	}
+	else if (iRealLeft != 0 && iRealBottom != 0) {
+		//--------------------------------------------
+		sCutRect[0].iX[0] = sTopRect.iX;
+		sCutRect[0].iY[0] = sTopRect.iY2;
+		sCutRect[0].iX[1] = sTopRect.iX;
+		sCutRect[0].iY[1] = iRealLeft;
+		sCutRect[0].iX[2] = iRealBottom;
+		sCutRect[0].iY[2] = sTopRect.iY;
+		sCutRect[0].iX[3] = sTopRect.iX2;
+		sCutRect[0].iY[3] = sTopRect.iY;
+		sCutRect[0].iX[4] = sTopRect.iX2;
+		sCutRect[0].iY[4] = sTopRect.iY2;
+		sCutRect[0].iWTF[0] = 6;
+		//--------------------------------------------
+		sCutRect[1].iX[0] = sTopRect.iX;
+		sCutRect[1].iY[0] = iRealLeft;
+		sCutRect[1].iX[1] = sTopRect.iX;
+		sCutRect[1].iY[1] = sTopRect.iY;
+		sCutRect[1].iX[2] = iRealBottom;
+		sCutRect[1].iY[2] = sTopRect.iY;
+		sCutRect[1].iX[3] = iRealBottom;
+		sCutRect[1].iY[3] = sTopRect.iY;
+		sCutRect[1].iX[4] = iRealBottom;
+		sCutRect[1].iY[4] = sTopRect.iY;
+		sCutRect[1].iWTF[0] = 3;
+		//--------------------------------------------
+		iCompare = 1; //1번이 작다.
+	}
+	vCalculateRect();
+}
+
+void vCalculateRect() {
+
+	if (iCompare == 0 || iCompare == 1) {
+		// 계산할 필요가 없이 이미 답이 나왔다..!
+		//glutTimerFunc(50, TimerFunction, 2); // 타이머함수 재 설정
+	}
+	else {
+		if (iCompare == 3) {
+			int iTopH[2], iBottomH[2], iVertical[2], iCalculate[2];
+			iTopH[0] = sCutRect[0].iX[3] - sCutRect[0].iX[0];
+			iTopH[1] = sCutRect[1].iX[3] - sCutRect[1].iX[0];
+			iBottomH[0] = sCutRect[0].iX[2] - sCutRect[0].iX[1];
+			iBottomH[1] = sCutRect[1].iX[2] - sCutRect[1].iX[1];
+			iVertical[0] = sCutRect[0].iY[0] - sCutRect[0].iY[1];
+			iVertical[1] = sCutRect[1].iY[0] - sCutRect[1].iY[1];
+
+			iCalculate[0] = iTopH[0] + iBottomH[0];
+			iCalculate[0] *= iVertical[0];
+			iCalculate[0] /= 2;
+
+			iCalculate[1] = iTopH[1] + iBottomH[1];
+			iCalculate[1] *= iVertical[1];
+			iCalculate[1] /= 2;
+
+			if (iCalculate[0] <= iCalculate[1]) {
+				iCompare = 0;
+			}
+			else {
+				iCompare = 1;
+			}
+		}
+
+		if (iCompare == 4) {
+			int iVertical[2], iHorizontal[2], iCalculate[2];
+			iVertical[0] = sCutRect[0].iY[0] - sCutRect[0].iY[1];
+			iVertical[1] = sCutRect[1].iY[0] - sCutRect[1].iY[1];
+			iHorizontal[0] = sCutRect[0].iX[2] - sCutRect[0].iX[1];
+			iHorizontal[1] = sCutRect[1].iX[2] - sCutRect[1].iX[1];
+			iCalculate[0] = iHorizontal[0] * iVertical[0];
+			iCalculate[1] = iHorizontal[1] * iVertical[1];
+
+			if (iCalculate[0] <= iCalculate[1]) {
+				iCompare = 0;
+			}
+			else {
+				iCompare = 1;
+			}
+		}
+	}
+}
+
+void vCCheck() {
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// X, Y 좌표를 정렬을 이용해 가장 하단부분 구하는 것과
+	// X, Y 좌표의 최소 최대값을 구한다.
+	int iRectDataY[dLimitRect];
+	int iRectDataX[dLimitRect];
+	int iRectDataLocationY[dLimitRect];
+	int iRectDataLocationX[dLimitRect];
+
+	for (int i = 0; i < dLimitRect; ++i) {
+		iRectDataY[i] = sCutRect[iCompare].iY[i];
+		iRectDataX[i] = sCutRect[iCompare].iX[i];
+		iRectDataLocationY[i] = i;
+		iRectDataLocationX[i] = i;
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataY[j] > iRectDataY[j + 1]) {
+				int temp = iRectDataY[j];
+				iRectDataY[j] = iRectDataY[j + 1];
+				iRectDataY[j + 1] = temp;
+				temp = iRectDataLocationY[j];
+				iRectDataLocationY[j] = iRectDataLocationY[j + 1];
+				iRectDataLocationY[j + 1] = temp;
+			}
+		}
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataX[j] > iRectDataX[j + 1]) {
+				int temp = iRectDataX[j];
+				iRectDataX[j] = iRectDataX[j + 1];
+				iRectDataX[j + 1] = temp;
+				temp = iRectDataLocationX[j];
+				iRectDataLocationX[j] = iRectDataLocationX[j + 1];
+				iRectDataLocationX[j + 1] = temp;
+			}
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// 왼쪽 모서리에 걸리는지, 오른쪽 모서리에 걸리는지 체크 하는 함수
+	int iRealBottom = iRectDataLocationY[0];
+	int iRealBottom2 = iRectDataLocationY[1];
+	int iRealBottomX = iRectDataLocationX[0];
+	int iRealBottomX2 = iRectDataLocationX[dLimitRect - 1];
+
+	int iHeightM = 0;
+
+	if (sBtmRect[0].iY >= sCutRect[iCompare].iY[iRealBottom]) {
+		if (sCutRect[iCompare].iX[iRealBottomX] <= sBtmRect[0].iX && sCutRect[iCompare].iX[iRealBottomX2] >= sBtmRect[0].iX) {
+			iHeightM = sCutRect[iCompare].iY[iRealBottom2] + sCutRect[iCompare].iY[iRealBottom];
+			iHeightM /= 2;
+			if (iHeightM == sBtmRect[0].iY) {
+				printf("Left");
+				bSinCosLeft = true;
+				bStop = true;
+				iLeftBye = 0;
+				//glutTimerFunc(10, TimerFunction, 3);
+			}
+		}
+
+		if (sCutRect[iCompare].iX[iRealBottomX] <= sBtmRect[3].iX && sCutRect[iCompare].iX[iRealBottomX2] >= sBtmRect[3].iX) {
+			iHeightM = sCutRect[iCompare].iY[iRealBottom2] + sCutRect[iCompare].iY[iRealBottom];
+			iHeightM /= 2;
+			if (iHeightM == sBtmRect[3].iY) {
+				printf("Right");
+				bSinCosRight = true;
+				bStop = true;
+				iRightBye = 0;
+				//glutTimerFunc(10, TimerFunction, 3);
+			}
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//물통 안에 들어왔지만 나가려고 할때의 체크
+	if (sBtmRect[0].iX <= sCutRect[iCompare].iX[iRealBottomX] && sBtmRect[3].iX >= sCutRect[iCompare].iX[iRealBottomX2]) {
+		if (sBtmRect[0].iY >= sCutRect[iCompare].iY[iRealBottom]) {
+			//printf("일단 안에 들어와있다..!");
+			sCutRect[iCompare].bINrect[iCompare] = true;
+		}
+	}
+
+	if (sCutRect[iCompare].bINrect[iCompare] == true) {
+		if (sCutRect[iCompare].iX[iRealBottomX] <= sBtmRect[0].iX) {
+			for (int j = 0; j < 5; ++j) {
+				sCutRect[iCompare].iX[j] += 2;
+				sClip[iCompare].iX[j] += 2;
+			}
+		}
+	}
+
+	if (sCutRect[iCompare].bINrect[iCompare] == true) {
+		if (sCutRect[iCompare].iX[iRealBottomX2] >= sBtmRect[3].iX) {
+			for (int j = 0; j < 5; ++j) {
+				sCutRect[iCompare].iX[j] -= 2;
+				sClip[iCompare].iX[j] -= 2;
+			}
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//이미 일정 수준 이상 내려가서 바구니 안에 못들어 가게 한다.
+	if (sBtmRect[0].iY >= sCutRect[iCompare].iY[iRealBottom] && sCutRect[iCompare].bINrect[iCompare] == false) {
+		sCutRect[iCompare].bOutRect[iCompare] = true;
+
+		if (sCutRect[iCompare].bOutRect[iCompare] == true) {
+			if (sCutRect[iCompare].iX[iRealBottomX2] <= sBtmRect[0].iX && sCutRect[iCompare].iX[iRealBottomX2] <= sBtmRect[3].iX) {
+				//왼쪽 = 1
+				sCutRect[iCompare].iOutRectMove[iCompare] = 1;
+			}
+		}
+
+		if (sCutRect[iCompare].bOutRect[iCompare] == true) {
+			if (sCutRect[iCompare].iX[iRealBottomX] >= sBtmRect[3].iX  && sCutRect[iCompare].iX[iRealBottomX] >= sBtmRect[0].iX) {
+				// 오른쪽 = 2
+				sCutRect[iCompare].iOutRectMove[iCompare] = 2;
+			}
+		}
+	}
+
+	if (sCutRect[iCompare].iX[iRealBottomX2] >= sBtmRect[0].iX && sCutRect[iCompare].iOutRectMove[iCompare] == 1) {
+		for (int j = 0; j < 5; ++j) {
+			sCutRect[iCompare].iX[j] -= 2;
+		}
+	}
+
+	if (sCutRect[iCompare].iX[iRealBottomX] <= sBtmRect[3].iX && sCutRect[iCompare].iOutRectMove[iCompare] == 2) {
+		for (int j = 0; j < 5; ++j) {
+			sCutRect[iCompare].iX[j] += 2;
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// 정확하게 물 안에 들어갈 경우
+	if (sBtmRect[0].iX <= sCutRect[iCompare].iX[iRealBottomX] && sBtmRect[3].iX >= sCutRect[iCompare].iX[iRealBottomX2]) {
+		//클리핑 함수?
+		vClipingSort(iCompare, iComplete, sCutRect, true);
+		if (sBtmRect[1].iY >= sCutRect[iCompare].iY[iRealBottom]) {
+			bStop = true;
+			for (int i = 0; i < dLimitRect; ++i) {
+				sCompleteRect[iComplete].iX[i] = sCutRect[iCompare].iX[i];
+				sCompleteRect[iComplete].iY[i] = sCutRect[iCompare].iY[i];
+			}
+			//클리핑이 어긋나거나 할경우를 대비한 부분..!
+			int iClipDataY[dLimitRect];
+			int iClipDataLocationY[dLimitRect];
+
+			for (int i = 0; i < dLimitRect; ++i) {
+				iClipDataY[i] = sClip[iCompare].iY[i];
+				iClipDataLocationY[i] = i;
+			}
+
+			for (int i = 0; i < dLimitRect - 1; i++) {
+				for (int j = 0; j < dLimitRect - 1; j++) {
+					if (iClipDataY[j] > iClipDataY[j + 1]) {
+						int temp = iClipDataY[j];
+						iClipDataY[j] = iClipDataY[j + 1];
+						iClipDataY[j + 1] = temp;
+						temp = iClipDataLocationY[j];
+						iClipDataLocationY[j] = iClipDataLocationY[j + 1];
+						iClipDataLocationY[j + 1] = temp;
+					}
+				}
+			}
+
+			if (sClip[iCompare].iY[iClipDataLocationY[4]] <= (iClipDataY[0] + iClipDataY[3]) / 2) {
+				for (int i = 0; i < dLimitRect; ++i) {
+					sClip[iComplete].iX[i] = sCompleteRect[iComplete].iX[i];
+					sClip[iComplete].iY[i] = sCompleteRect[iComplete].iY[i];
+				}
+			}
+			//클리핑이 어긋나거나 할경우를 대비한 부분..!
+			sCompleteRect[iComplete].iWTF[0] = sCutRect[iCompare].iWTF[0];
+			sCompleteRect[iComplete].bDraw[iComplete] = true;
+			iComplete++;
+			if (iComplete > dLimitRect) {
+				iComplete = 0;
+			}
+			vReset();
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//화면 밖으로 완전히 나갈시 초기화..!
+	if (iCompare != -1 && sCutRect[iCompare].iY[iRealBottom2] <= 0) {
+		bStop = true;
+		vReset();
+	}
+	//------------------------------------------------------------------------------------------------------------------------------------------------------------
+}
+
+
+void vClipingSort(int iCompare, int iComplete, struct sCut sCutRect[], bool bNewRect) {
+	// 클리핑 어떻게 해야하지?
+	int iBottomX, iTopX;
+	int iLeftY, iRightY;
+	// 직선의 그래프 구하는방법
+	int iRectDataY[dLimitRect];
+	int iRectDataX[dLimitRect];
+	int iRectDataLocationY[dLimitRect];
+	int iRectDataLocationX[dLimitRect];
+
+	for (int i = 0; i < dLimitRect; ++i) {
+		iRectDataY[i] = sCutRect[iCompare].iY[i];
+		iRectDataX[i] = sCutRect[iCompare].iX[i];
+		iRectDataLocationY[i] = i;
+		iRectDataLocationX[i] = i;
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataY[j] > iRectDataY[j + 1]) {
+				int temp = iRectDataY[j];
+				iRectDataY[j] = iRectDataY[j + 1];
+				iRectDataY[j + 1] = temp;
+				temp = iRectDataLocationY[j];
+				iRectDataLocationY[j] = iRectDataLocationY[j + 1];
+				iRectDataLocationY[j + 1] = temp;
+			}
+		}
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataX[j] > iRectDataX[j + 1]) {
+				int temp = iRectDataX[j];
+				iRectDataX[j] = iRectDataX[j + 1];
+				iRectDataX[j + 1] = temp;
+				temp = iRectDataLocationX[j];
+				iRectDataLocationX[j] = iRectDataLocationX[j + 1];
+				iRectDataLocationX[j + 1] = temp;
+			}
+		}
+	}
+	int iRealBottomY = iRectDataLocationY[0];
+	int iRealBottomY2 = iRectDataLocationY[dLimitRect - 1];
+	int iRealBottomX = iRectDataLocationX[0];
+	int iRealBottomX2 = iRectDataLocationX[dLimitRect - 1];
+
+	iBottomX = vCalculateTopBottom(sWavRect[0].iY, sWavRect[3].iY, sWavRect[0].iX, sWavRect[3].iX, sCutRect[iCompare].iY[iRealBottomY]);
+	iTopX = vCalculateTopBottom(sWavRect[0].iY, sWavRect[3].iY, sWavRect[0].iX, sWavRect[3].iX, sCutRect[iCompare].iY[iRealBottomY2]);
+	iLeftY = vCalculateLeftRight(sWavRect[0].iY, sWavRect[3].iY, sWavRect[0].iX, sWavRect[3].iX, sCutRect[iCompare].iX[iRealBottomX]);
+	iRightY = vCalculateLeftRight(sWavRect[0].iY, sWavRect[3].iY, sWavRect[0].iX, sWavRect[3].iX, sCutRect[iCompare].iX[iRealBottomX2]);
+
+	vClipingCheck(iLeftY, iRightY, iTopX, iBottomX, iCompare, iComplete, sCutRect, bNewRect);
+}
+
+
+void vClipingCheck(int iLeftY, int iRightY, int iTopX, int iBottomX, int iCompare, int iComplete, struct sCut sCutRect[], bool bNewRect) {
+	int iRectDataY[dLimitRect];
+	int iRectDataX[dLimitRect];
+	int iRectDataLocationY[dLimitRect];
+	int iRectDataLocationX[dLimitRect];
+
+	for (int i = 0; i < dLimitRect; ++i) {
+		iRectDataY[i] = sCutRect[iCompare].iY[i];
+		iRectDataX[i] = sCutRect[iCompare].iX[i];
+		iRectDataLocationY[i] = i;
+		iRectDataLocationX[i] = i;
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataY[j] > iRectDataY[j + 1]) {
+				int temp = iRectDataY[j];
+				iRectDataY[j] = iRectDataY[j + 1];
+				iRectDataY[j + 1] = temp;
+				temp = iRectDataLocationY[j];
+				iRectDataLocationY[j] = iRectDataLocationY[j + 1];
+				iRectDataLocationY[j + 1] = temp;
+			}
+		}
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataX[j] > iRectDataX[j + 1]) {
+				int temp = iRectDataX[j];
+				iRectDataX[j] = iRectDataX[j + 1];
+				iRectDataX[j + 1] = temp;
+				temp = iRectDataLocationX[j];
+				iRectDataLocationX[j] = iRectDataLocationX[j + 1];
+				iRectDataLocationX[j + 1] = temp;
+			}
+		}
+	}
+
+	int iRealBottomY = iRectDataLocationY[0];
+	int iRealBottomY2 = iRectDataLocationY[dLimitRect - 1];
+	int iRealBottomX = iRectDataLocationX[0];
+	int iRealBottomX2 = iRectDataLocationX[dLimitRect - 1];
+	iRealLeft = 0, iRealRight = 0, iRealTop = 0, iRealBottom = 0;
+
+	bool bDelete[4] = { (false, false, false, false) };
+
+	if (iLeftY >= sCutRect[iCompare].iY[iRealBottomY] && iLeftY <= sCutRect[iCompare].iY[iRealBottomY2]) {
+		//2printf("왼쪽 : (%d, %d)\n", sCutRect[iCompare].iX[iRealBottomX], iLeftY);
+		iRealLeft = iLeftY;
+		bDelete[0] = true;
+	}
+
+	if (iRightY >= sCutRect[iCompare].iY[iRealBottomY] && iRightY <= sCutRect[iCompare].iY[iRealBottomY2]) {
+		//2printf("오른쪽 : (%d, %d)\n", sCutRect[iCompare].iX[iRealBottomX2], iRightY);
+		iRealRight = iRightY;
+		bDelete[1] = true;
+	}
+
+	if (iTopX >= sCutRect[iCompare].iX[iRealBottomX] && iTopX <= sCutRect[iCompare].iX[iRealBottomX2]) {
+		//2printf("위 : (%d, %d)\n", iTopX, sCutRect[iCompare].iY[iRealBottomY2]);
+		iRealTop = iTopX;
+		bDelete[2] = true;
+	}
+
+	if (iBottomX >= sCutRect[iCompare].iX[iRealBottomX] && iBottomX <= sCutRect[iCompare].iX[iRealBottomX2]) {
+		//2printf("아래 : (%d, %d)\n", iBottomX, sCutRect[iCompare].iY[iRealBottomY]);
+		iRealBottom = iBottomX;
+		bDelete[3] = true;
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		if (bDelete[i] == false) {
+			if (i == 0) {
+				iRealLeft = 0;
+			}
+			else if (i == 1) {
+				iRealRight = 0;
+			}
+			else if (i == 2) {
+				iRealTop = 0;
+			}
+			else if (i == 3) {
+				iRealBottom = 0;
+			}
+
+		}
+	}
+
+
+	vCliping(iCompare, iComplete, sCutRect, bNewRect);
+}
+
+void vCliping(int iCompare, int iComplete, struct sCut sCutRect[], bool bNewRect) {
+	int iRectDataY[dLimitRect];
+	int iRectDataX[dLimitRect];
+	int iRectDataLocationY[dLimitRect];
+	int iRectDataLocationX[dLimitRect];
+
+	for (int i = 0; i < dLimitRect; ++i) {
+		iRectDataY[i] = sCutRect[iCompare].iY[i];
+		iRectDataX[i] = sCutRect[iCompare].iX[i];
+		iRectDataLocationY[i] = i;
+		iRectDataLocationX[i] = i;
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataY[j] > iRectDataY[j + 1]) {
+				int temp = iRectDataY[j];
+				iRectDataY[j] = iRectDataY[j + 1];
+				iRectDataY[j + 1] = temp;
+				temp = iRectDataLocationY[j];
+				iRectDataLocationY[j] = iRectDataLocationY[j + 1];
+				iRectDataLocationY[j + 1] = temp;
+			}
+		}
+	}
+
+	for (int i = 0; i < dLimitRect - 1; i++) {
+		for (int j = 0; j < dLimitRect - 1; j++) {
+			if (iRectDataX[j] > iRectDataX[j + 1]) {
+				int temp = iRectDataX[j];
+				iRectDataX[j] = iRectDataX[j + 1];
+				iRectDataX[j + 1] = temp;
+				temp = iRectDataLocationX[j];
+				iRectDataLocationX[j] = iRectDataLocationX[j + 1];
+				iRectDataLocationX[j + 1] = temp;
+			}
+		}
+	}
+	int iRealBottomY = iRectDataLocationY[0];
+	int iRealBottomY2 = iRectDataLocationY[dLimitRect - 1];
+	int iRealBottomX = iRectDataLocationX[0];
+	int iRealBottomX2 = iRectDataLocationX[dLimitRect - 1];
+
+	/*printf("X 정렬 : ");
+	for (int i = 0; i < 5; ++i){
+	printf("%d ", iRectDataX[i]);
+	}
+	printf("\n");
+	printf("Y 정렬 : ");
+	for (int i = 0; i < 5; ++i){
+	printf("%d ", iRectDataY[i]);
+	}
+	printf("\n");
+	*/
+	//printf("WTF : %d\n", sCutRect[iCompare].iWTF[0]);
+	//printf("[%d]= %d\n", iComplete, sClip[iComplete].iX[0]);
+	if (iRealLeft != 0 && iRealBottom != 0) {
+
+		if (sCutRect[iCompare].iWTF[0] == 2) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = iTotalX;
+			sClip[iComplete].iY[1] = iTotalY;
+			sClip[iComplete].iX[2] = iRealBottom;
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iRealBottom;
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = iRealBottom;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 3) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = iRealLeft;
+			sClip[iComplete].iX[2] = iRealBottom;
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iRealBottom;
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = iRealBottom;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 4) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = iRealLeft;
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 11) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iRealBottom;
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iRealBottom;
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = iRealBottom;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 12) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 3]], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 13) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRectDataLocationX[1]], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = iTotalX;
+			sClip[iComplete].iY[0] = iTotalY;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iRealBottom;
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iRealBottom;
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = iRealBottom;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 14) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY2], sCutRect[iCompare].iX[iRectDataLocationX[1]], sCutRect[iCompare].iY[iRealBottomY]);
+			sClip[iComplete].iX[0] = iTotalX;
+			sClip[iComplete].iY[0] = iTotalY;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRectDataLocationX[1]];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iRealBottom;
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iRealBottom;
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = iRealBottom;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 16) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRectDataLocationY[1]]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 17) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRectDataLocationY[1]]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 18) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRectDataLocationY[1]]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+	}
+
+	if (iRealLeft != 0 && iRealRight != 0) {
+		// 삼각형일때!
+		if (sCutRect[iCompare].iWTF[0] == 2) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = iTotalX;
+			sClip[iComplete].iY[1] = iTotalY;
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = iRealRight;
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 3) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY2], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = iRealLeft;
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 4) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = iRealLeft;
+			sClip[iComplete].iX[2] = iTotalX;
+			sClip[iComplete].iY[2] = iTotalY;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 5) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY2], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY]);
+			sClip[iComplete].iX[0] = iTotalX;
+			sClip[iComplete].iY[0] = iTotalY;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = iRealRight;
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 11) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 2]], sCutRect[iCompare].iY[iRealBottomY2], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 12) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 3]], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 3]];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 13) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRectDataLocationX[1]], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = iTotalX;
+			sClip[iComplete].iY[0] = iTotalY;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 14) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY2], sCutRect[iCompare].iX[iRectDataLocationX[1]], sCutRect[iCompare].iY[iRealBottomY]);
+			sClip[iComplete].iX[0] = iTotalX;
+			sClip[iComplete].iY[0] = iTotalY;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRectDataLocationX[1]];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 15) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRectDataLocationX[1]];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 16) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRectDataLocationY[1]]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+
+			if (iTotalX >= sCutRect[iCompare].iX[iRealBottomX2]) {
+				iTotalX = sCutRect[iCompare].iX[iRealBottomX2];
+			}
+
+			if (iRealRight >= sCutRect[iCompare].iY[iRectDataLocationY[1]]) {
+				sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+				sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRectDataLocationY[1]];
+				sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+				sClip[iComplete].iY[3] = iRealRight;
+				sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+				sClip[iComplete].iY[4] = iRealRight;
+
+			}
+			else {
+				sClip[iComplete].iX[2] = iTotalX;
+				sClip[iComplete].iY[2] = iTotalY;
+				sClip[iComplete].iX[3] = iTotalX;
+				sClip[iComplete].iY[3] = iTotalY;
+				sClip[iComplete].iX[4] = iTotalX;
+				sClip[iComplete].iY[4] = iTotalY;
+			}
+
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 17) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 18) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			if (sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]] <= iRealLeft) {
+				sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+				sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]];
+			}
+			else {
+				sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+				sClip[iComplete].iY[0] = iRealLeft;
+			}
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			if (sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]] <= iRealLeft) {
+				sClip[iComplete].iX[4] = iTotalX;
+				sClip[iComplete].iY[4] = iTotalY;
+			}
+			else {
+				sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+				sClip[iComplete].iY[4] = iRealRight;
+			}
+		}
+
+
+	}
+
+	if (iRealTop != 0 && iRealLeft != 0) {
+
+		if (sCutRect[iCompare].iWTF[0] == 15) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRectDataLocationX[1]];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+
+		if (sCutRect[iCompare].iWTF[0] == 16) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRectDataLocationY[1]];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+	}
+
+	if (iRealTop != 0 && iRealRight != 0) {
+		// 삼각형일때!
+		if (sCutRect[iCompare].iWTF[0] == 2) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = iTotalX;
+			sClip[iComplete].iY[1] = iTotalY;
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = iRealRight;
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 4) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iY[iRealBottomX2];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[2] = iRealRight;
+			sClip[iComplete].iX[3] = iTotalX;
+			sClip[iComplete].iY[3] = iTotalY;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 5) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = iRealRight;
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = iRealRight;
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 12) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 3]], sCutRect[iCompare].iY[iRealBottomY], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRectDataLocationX[dLimitRect - 3]];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 13) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRectDataLocationX[1]];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 14) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRectDataLocationX[1]];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 15) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRectDataLocationX[1]];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 16) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRectDataLocationY[1]];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+
+		if (sCutRect[iCompare].iWTF[0] == 17) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]];
+			sClip[iComplete].iX[4] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 18) {
+			vCalculateXyXy(sWavRect[0].iX, sWavRect[0].iY, sWavRect[3].iX, sWavRect[3].iY, sCutRect[iCompare].iX[iRealBottomX], sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]], sCutRect[iCompare].iX[iRealBottomX2], sCutRect[iCompare].iY[iRealBottomY2]);
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = sCutRect[iCompare].iY[iRectDataLocationY[dLimitRect - 3]];
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = iRealRight;
+			sClip[iComplete].iX[4] = iTotalX;
+			sClip[iComplete].iY[4] = iTotalY;
+		}
+
+	}
+
+	if (iRealTop != 0 && iRealLeft != 0 && iRealRight != 0) {
+		if (sCutRect[iCompare].iWTF[0] == 15) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRectDataLocationX[1]];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+		if (sCutRect[iCompare].iWTF[0] == 16) {
+			sClip[iComplete].iX[0] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[0] = iRealLeft;
+			sClip[iComplete].iX[1] = sCutRect[iCompare].iX[iRealBottomX];
+			sClip[iComplete].iY[1] = sCutRect[iCompare].iY[iRealBottomY];
+			sClip[iComplete].iX[2] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[2] = sCutRect[iCompare].iY[iRectDataLocationY[1]];
+			sClip[iComplete].iX[3] = sCutRect[iCompare].iX[iRealBottomX2];
+			sClip[iComplete].iY[3] = sCutRect[iCompare].iY[iRealBottomY2];
+			sClip[iComplete].iX[4] = iRealTop;
+			sClip[iComplete].iY[4] = sCutRect[iCompare].iY[iRealBottomY2];
+		}
+
+	}
+
+	if (iRealTop == 0 && iRealRight == 0 && iRealLeft == 0 && iRealBottom == 0 || iRealTop != 0 || iRealTop != 0 && iRealRight != 0) {
+		//다끝난거다!!
+		if (sBtmRect[0].iX <= sCutRect[iCompare].iX[iRealBottomX] && sBtmRect[3].iX >= sCutRect[iCompare].iX[iRealBottomX2]) {
+			sClip[iComplete].bWTF[0] = true;
+			for (int i = 0; i < 5; ++i) {
+				if (bNewRect == true) {
+					// 물안에 들어왔는지 체크이후에 작동을 하게 한다..!
+					sClip[iComplete].iY[i] -= 1;
+					//sClip[iComplete].iY[i] = sCutRect[iCompare].iY[i];
+					//sClip[iComplete].iX[i] = sCutRect[iCompare].iX[i];
+				}
+			}
+		}
+
+	}
 }
