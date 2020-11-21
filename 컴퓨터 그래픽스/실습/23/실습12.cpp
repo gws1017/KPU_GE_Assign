@@ -5,11 +5,12 @@
 #include <gl/glew.h> // 필요한 헤더파일 include
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm.hpp>
+#include <ext.hpp>
+#include <gtc/matrix_transform.hpp>
 #include "stb_image.h"
-
+
+
 using namespace std;
 
 #define WIDTH 500
@@ -19,7 +20,7 @@ using namespace std;
 #define PP 5 //사각뿔의 점 수
 #define SIZE 0.3
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 5.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 10.0f);
 
 glm::mat4 lt = glm::mat4(1.0f);
 glm::vec3 ltPos = glm::vec3(0.0f, 1000.0f, 0.0f);
@@ -209,7 +210,7 @@ struct Rec {
 
 	void LoadObj()
 	{
-		ReadObj("rec.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount);
+		ReadObj("balchang.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount);
 	}
 
 	void InitBuffer()
@@ -245,7 +246,8 @@ struct Rec {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(int), indexData, GL_STATIC_DRAW);
 
 		S1 = glm::scale(S1, glm::vec3(0.03, 0.03, 0.03));
-	}	void InitTexture()
+	}
+	void InitTexture()
 	{
 		glGenTextures(1, &texture); //--- 텍스처 생성
 		glBindTexture(GL_TEXTURE_2D, texture); //--- 텍스처 바인딩
@@ -253,7 +255,8 @@ struct Rec {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		unsigned char *data = stbi_load("box.png", &width, &height, &nrChannels,0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
+		stbi_set_flip_vertically_on_load(true);
+		unsigned char *data = stbi_load("test.png", &width, &height, &nrChannels,0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
 		glUseProgram(s_program);
 		int tLocation = glGetUniformLocation(s_program, "outTexture"); //--- outTexture 유니폼 샘플러의 위치를 가져옴
@@ -271,6 +274,175 @@ struct Rec {
 	}
 };
 
+struct Pyr {
+	GLuint vao, vbo[3], ebo;
+
+	float* vPosData;
+	float* vNormalData;
+	float* vTextureCoordinateData;
+	int* indexData;
+	int vertexCount;
+	int indexCount;
+
+	int width, height, nrChannels;
+	unsigned int texture;
+	glm::mat4 S1 = glm::mat4(1.0f);
+
+	void LoadObj()
+	{
+		ReadObj("pyramid.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount);
+	}
+
+	void InitBuffer()
+	{
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(3, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 3, vPosData, GL_STATIC_DRAW);
+		int posLocation = glGetAttribLocation(s_program, "in_Position");
+		glVertexAttribPointer(posLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+		glEnableVertexAttribArray(posLocation);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 3, vNormalData, GL_STATIC_DRAW);
+		int normalLocation = glGetAttribLocation(s_program, "in_Normal");
+		glVertexAttribPointer(normalLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+		glEnableVertexAttribArray(normalLocation);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 2, vTextureCoordinateData, GL_STATIC_DRAW);
+		int uvLocation = glGetAttribLocation(s_program, "in_uv");
+		glVertexAttribPointer(uvLocation, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+		glEnableVertexAttribArray(uvLocation);
+
+
+
+		glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(int), indexData, GL_STATIC_DRAW);
+
+		S1 = glm::scale(S1, glm::vec3(0.3, 0.3, 0.3));
+	}
+	void InitTexture()
+	{
+		glGenTextures(1, &texture); //--- 텍스처 생성
+		glBindTexture(GL_TEXTURE_2D, texture); //--- 텍스처 바인딩
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); //--- 현재 바인딩된 텍스처의 파라미터 설정하기
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		stbi_set_flip_vertically_on_load(true);
+		unsigned char *data = stbi_load("pyramid.png", &width, &height, &nrChannels, 0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
+		glUseProgram(s_program);
+		int tLocation = glGetUniformLocation(s_program, "outTexture"); //--- outTexture 유니폼 샘플러의 위치를 가져옴
+		glUniform1i(tLocation, 0); //--- 샘플러를 0번 유닛으로 설정
+	}
+	void Draw()
+	{
+		glBindVertexArray(vao);
+		glUniform3f(vColorLocation, 1.0f, 1.0f, 1.0f);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUniform1i(flagLocation, 0);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(R*S1));
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	}
+};
+struct bottom {
+	float* vPosData;
+	float* vNormalData;
+	float* vTextureCoordinateData;
+	int* indexData;
+	int vertexCount;
+	int indexCount;
+
+	std::vector < glm::vec3 > vertices;
+	std::vector < glm::vec2 > uv;
+	std::vector < glm::vec3 > normals;
+
+	glm::mat4 T1 = glm::mat4(1.0f);
+	glm::mat4 R1 = glm::mat4(1.0f);
+	glm::mat4 S1 = glm::mat4(1.0f);
+	int width, height, nrChannels;
+	unsigned int texture;
+
+	GLuint vao, vbo[3], ebo;
+	void LoadObj()
+	{
+		ReadObj("bottom.obj", vPosData, vNormalData, vTextureCoordinateData, indexData, vertexCount, indexCount);
+	}
+	void InitBuffer()
+	{
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(3, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 3, vPosData, GL_STATIC_DRAW);
+		int posLocation = glGetAttribLocation(s_program, "in_Position");
+		glVertexAttribPointer(posLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+		glEnableVertexAttribArray(posLocation);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 3, vNormalData, GL_STATIC_DRAW);
+		int normalLocation = glGetAttribLocation(s_program, "in_Normal");
+		glVertexAttribPointer(normalLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, NULL);
+		glEnableVertexAttribArray(normalLocation);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(float) * 2, vTextureCoordinateData, GL_STATIC_DRAW);
+		int uvLocation = glGetAttribLocation(s_program, "in_uv");
+		glVertexAttribPointer(uvLocation, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+		glEnableVertexAttribArray(uvLocation);
+
+
+
+		glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(int), indexData, GL_STATIC_DRAW);
+		T1 = glm::translate(T1, glm::vec3(0.0f, 0.0f, -5.0f));
+		R1 = glm::rotate(R1, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		S1 = glm::scale(S1, glm::vec3(2.0f, 2.0f, 2.0f));
+	}
+
+	void InitTexture()
+	{
+		glGenTextures(1, &texture); //--- 텍스처 생성
+		glBindTexture(GL_TEXTURE_2D, texture); //--- 텍스처 바인딩
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); //--- 현재 바인딩된 텍스처의 파라미터 설정하기
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		stbi_set_flip_vertically_on_load(true);
+		unsigned char *data = stbi_load("bottom.png", &width, &height, &nrChannels, 0); //--- 텍스처로 사용할 비트맵 이미지 로드하기
+		if (nrChannels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); //---텍스처 이미지 정의
+		else if (nrChannels == 4)
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glUseProgram(s_program);
+		int tLocation = glGetUniformLocation(s_program, "outTexture"); //--- outTexture 유니폼 샘플러의 위치를 가져옴
+		glUniform1i(tLocation, 0); //--- 샘플러를 0번 유닛으로 설정
+	}
+	void Draw()
+	{
+
+		glBindVertexArray(vao);
+		glUniform1i(flagLocation, 1);
+		glUniform3f(vColorLocation, 1.0f, 1.0f, 1.0f);
+		//glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(T1*R1*S1));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		//glDrawArrays(GL_TRIANGLES, 0, vertices.size() * sizeof(glm::vec3));
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	}
+};
 void InitShader()
 {
 	make_vertexShader();
@@ -352,9 +524,9 @@ void InitRotate()
 	R = Rx * Ry;
 
 }
-
+bottom b;
 Rec r;
-
+Pyr p;
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정 
 { //--- 윈도우 생성하기
 	glutInit(&argc, argv); // glut 초기화
@@ -376,7 +548,12 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	r.LoadObj();
 	r.InitTexture();
 	r.InitBuffer();
-	
+	p.LoadObj();
+	p.InitTexture();
+	p.InitBuffer();
+	b.LoadObj();
+	b.InitTexture();
+	b.InitBuffer();
 
 	
 
@@ -546,9 +723,9 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	if (one++ == 0)InitRotate();
 
-
+	b.Draw();
 	if (select == 0) r.Draw();
-	if (select == 1) glDrawElements(GL_TRIANGLES,18, GL_UNSIGNED_INT, 0);
+	if (select == 1) p.Draw();
 
 	glutSwapBuffers(); // 화면에 출력하기
 

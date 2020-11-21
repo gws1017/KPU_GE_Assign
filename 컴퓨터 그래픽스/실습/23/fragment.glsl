@@ -5,11 +5,13 @@ out vec4 gl_FragColor;
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec2 uv;
 
 uniform vec3 viewPos;        //카메라의 EYE
 uniform vec3 lightPos; //--- 조명의 위치
 uniform vec3 lightColor; //--- 조명의 색
 uniform vec3 objectColor; //--- 객체의 색 근데 나는 ex_Color로 위에서 받아오고잇음 ㅅㄱ
+uniform sampler2D outTexture;
 
 uniform int flag;
 
@@ -32,4 +34,5 @@ void main(void)
 
     if(flag == 1)gl_FragColor = vec4(ex_Color,1.0);
 	else gl_FragColor = vec4(result,1.0);
+	gl_FragColor = texture(outTexture,uv ) * gl_FragColor;
 }
