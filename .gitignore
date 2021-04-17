@@ -29,3 +29,12 @@
 *.exe
 *.out
 *.app
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/.suo
+*.db
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/Browse.VC.db
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/Browse.VC.db-shm
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/Browse.VC.db-wal
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/Browse.VC.opendb
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/ipch/AutoPCH/7e2278785d9635f7/소스.ipch
+STL/중간과제/2021STLAssign/.vs/2021STLAssign/v16/ipch/AutoPCH/d83c190f523d1212/PLAYER.ipch
+*.tlog
