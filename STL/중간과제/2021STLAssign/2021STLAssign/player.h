@@ -53,7 +53,10 @@ private:
 	char* p; //확보한 메모리 시작번지
 
 	friend ostream& operator<<(ostream&, const Player& );
-	
+	bool operator<(const Player& a)
+	{
+		return score < a.score;
+	}
 };
 
 

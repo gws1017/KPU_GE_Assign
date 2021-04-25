@@ -36,8 +36,7 @@ Player& Player::operator=(const Player& other) {
 	return *this;
 }
 
-Player::Player(Player&& other) : name{ other.name }, score{ other.score }, id{ other.id }, num{ other.num }, p{ new char[num] } {
-	p = other.p;
+Player::Player(Player&& other) : name{ other.name }, score{ other.score }, id{ other.id }, num{ other.num }, p{ other.p } {
 	other.p = nullptr;
 	other.num = 0;
 	other.id = 0;
