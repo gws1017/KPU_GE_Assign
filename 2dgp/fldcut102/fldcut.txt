@@ -1,0 +1,19 @@
+fld分割プログラム fldcut102.exe
+
+
+
+の～こねのfldファイルを展開するプログラムです。
+fldcut102.exeにfldファイルをドラッグアンドドロップすれば変換します。
+
+もしくは、fldcut102.exeをfldのあるフォルダにコピーしてwクリックして
+yを入力してENTERを押してみてください。
+
+このプログラムは自己責任でご使用ください。
+
+
+<fldcut102.exe>作者 mkjpg 2005/02/15
+HP:http://www.geocities.co.jp/Playtown-Spade/6770/
+
+1.02 FLD0300に対応
+1.01 FLD0100に対応
+1.00 完成
