@@ -1,0 +1,83 @@
+#include <iostream>
+#include "ShapeManager.h"
+using namespace std;
+
+ShapeManager::ShapeManager(int n)
+{
+	nShape = 0;
+	capacity = n;
+	shapes = new Shape *[capacity];
+}
+
+ShapeManager::~ShapeManager()
+{
+	delete[] shapes;
+}
+
+void ShapeManager::insert(Shape* a)
+{
+	shapes[nShape] = a; // nShape번째 공간에 클래스포인터 a(도형이 담긴 정보를 가리킴)를 저장
+	nShape++;           // nShape를 하나 증가시켜 다음 번지로 이동
+};
+
+void ShapeManager::draw() const
+{
+	cout << "---------------------------------------------" << endl;
+	cout << "관리하는 모든 도형을 그립니다" << endl;
+	cout << "최대" << capacity << "개의 도형을 담을 수 있습니다" << endl;
+	cout << "모두" << nShape << "개의 도형이 있습니다" << endl;
+
+	for (int i = 0; i < nShape; ++i) {
+		cout << "[" << i << "] ";
+		shapes[i]->draw();
+	}
+	cout << endl;
+
+	cout << "---------------------------------------------" << endl;
+	cout << "그리기를 마칩니다" << endl;
+	cout << "---------------------------------------------" << endl << endl;
+};
+
+
+
+#include "shape.h"
+
+class ShapeManager {
+	int nShape;
+	int capacity;
+	Shape** shapes;
+
+public:
+	explicit ShapeManager(int n); //explicit 자동 형변환을 막는 용도
+
+	~ShapeManager();
+	ShapeManager(const ShapeManager&) = default;
+
+	void insert(Shape *);
+	void draw() const;
+}; 
+
+다형성구현.cpp
+
+#include "point.h"
+#include "triangle.h"
+#include "circle.h"
+#include "rectangle.h"
+#include "ShapeManager.h"
+
+int main()
+{
+	ShapeManager sm(100);
+
+	sm.insert(new Triangle());
+	sm.insert(new Triangle(Point(0, 0), Point(1, 1), Point(2, 2)));
+	sm.insert(new Circle(Point(1.23, 4.56), 7.89));
+
+	for (int i = 0; i < 10; ++i)
+		sm.insert(new Rectangle(Point(i, i + 1), Point(i * 2, i * 3)));
+
+	sm.draw();
+}
+
+
+
