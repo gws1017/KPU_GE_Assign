@@ -32,7 +32,7 @@ D3D12_DEPTH_STENCIL_DESC CShader::CreateDepthStencilState()
 {
 	D3D12_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
 	ZeroMemory(&d3dDepthStencilDesc, sizeof(D3D12_DEPTH_STENCIL_DESC));
-	d3dDepthStencilDesc.DepthEnable						= FALSE;
+	d3dDepthStencilDesc.DepthEnable						= TRUE;
 	d3dDepthStencilDesc.DepthWriteMask					= D3D12_DEPTH_WRITE_MASK_ALL;
 	d3dDepthStencilDesc.DepthFunc						= D3D12_COMPARISON_FUNC_LESS;
 	
@@ -280,12 +280,14 @@ void CObjectsShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComman
 	float fyPitch = 12.0f * 2.5f;
 	float fzPitch = 12.0f * 2.5f;
 	CRotatingObject* pRotatingObject = NULL;
-	for (int i = 0 ,z = +zObjects; z >= -zObjects; z--)
-	{
-		for (int y = -yObjects; y <= yObjects; y++)
-		{
+	
+		
 			for (int x = -xObjects; x <= xObjects; x++)
 			{
+				for (int y = -yObjects; y <= yObjects; y++)
+				{
+					for (int z = -zObjects; z <= zObjects; z++)
+					{
 
 				pRotatingObject = new CRotatingObject();
 				pRotatingObject->SetMesh(pCubeMesh);
