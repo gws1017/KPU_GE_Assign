@@ -1,0 +1,32 @@
+- Kotlin vs Java : 두개를 섞어서 쓰는 것도 가능
+- Package name / Bundle identifier 리버스 도메인(kr.ac.kpu.game.s2017182016.gamename)
+ 실제 존재하지않는 도메인이 아니여도 상관없음 다른사람과 구별을 위한 것
+- manifest파일 : <application으로 감싸짐, 권한 (사용자에게 민감한 정보에 엑세스), cnofigChanges : 가로세로 바뀔때,다시실행시키지말것 (orientation|screenSize) ,screenOrientation : landscape,portrait 가로 세로 고정
+- minimum sdk(API LEVEL): 몇버전에서 실행할 수 있나 api 숫자가 높을수록 최신 기능을 사용할 수 있다
+반대로 숫자가 낮은 기기에서는 프로그램이 돌아가지 않는다
+- avd 대신 실기기로 테스트시 개발용으로 만드는게 필요함 (환경설정 - 기기 정보 - 빌드 넘버 7번터치시
+개발자용으로 전환됨)
+- 프로젝트의 빌드를 위해 build.gradle파일을 이용함(빌드를 할때 필요한 속성을 정함
+  - 컴파일버전, 
+  - 버전네임 : 사용자에 노출되는 앱 버전 ( 첫번째 숫자는 중요한 기능이 바뀔때, 두번째 숫자는 마이너한 기능향상
+    3번째는 아주 사소한기능이거나 버그픽스, 4번째는 빌드넘버(커밋한 개수,날짜, 다 다름),
+  - 버전코드 : 업데이트 비교 대상, 사용자에게 노출이안됨
+- 리소스 폴더 res - mimap 의 dpi 는 configuration임,해상도별로 리소스를 준비할 수 있지만 원래 해상도대로 이미지를 로드함(bitmapfactory 옵션)
+- layout - activity_main.xml configuration에 따라 준비할 수 있으나 관리는 매우 불편함, 가급적 최대한 하나만 가지고 할수 있는게 좋음
+- string table - 안드로이드에서 문자열을 처리할때 소스코드에서 처리하는걸 권장하지않음(다국어 처리위해) -> string.xml에서 string id별로 내용을 작성하고 소스코드에서 id를 사용 (언어별로 설정도 가능, values, values-ko)
+ 실제코드는 R.string.~
+- 파일이름내에 -사용가능하나 자바 아이덴티파이어로는 "-,(", 자료형,첫번째글자 숫자 쓰지 못함 (스트링테이블도 동일)
+- layout 크기 : match_parent: 부모의 크기에 맞춤, wrap_content:내용 크기에 맞춤, @dimen/score_text_size : configuration에따라 바꿔주기 가능(숫자가들어가는 모든곳)
+- 단위 : sp(폰트크기비례) px(실제 디바이스 점수 쓰지마라), dp(기기와 관계없이 비슷한 크기 보장) - 반드시 단위를 명시해야함
+- findViewById : 비용이 드므로 여러번 하지않고 생성자에서 한번만 한다
+- xml : <>여는태그와 </>닫는 태그가 있다 태그 사이에 태그가 있을 수 있다. , <>?</> = < ?/>
+- hint 사용자에게 안내할때 사용
+- 패딩과 마진의 차이 : 내컨텐트에서 얼마나 제외할건지 마진은 parent에서 배치시 얼마나 제외할건지
+- garbage collection : 전부 검사를 하여 마크가 되있지않은 객체를 날려버림, 언제 일어나는지 알수 없음, 이시점에 시스템이 잠시 멈춤, 이것 때문에 게임루프에서 추가 삭제를 하는건 좋지않음
+- atan vs atan2 : atan2 가 더정확함 
+- canvas 현재상태 저장 save() 다시 pop해서 되돌림 restore()
+- 버튼을 눌럿을때 코드 가 실행되는 방법 4가지 (onclickListner,onclickAttribute,button 객체를 findviewid로 얻어서 setonclickListner(로컬, 멤버, this))
+- alt + enter : 멤버 변수 , 로컬변수, 상수 만들기, 임포트
+- builder.setTitle (빌더 패턴이 가지는 장점: 생성자를많이 만들지 않아도됨, 내용물이 덜 채워진 상태로 생성되는걸 막음)
+- Choreographer를 이용해 60초마다 불리도록(게임루프)V-Sync에 맞춰서 호출할 수 있음, 타이머로도 가능
+- 벡터를 안쓰고 어레이를 씀(벡터가 더안전하나 비효율적,느림, 계속 접근허락을 받아야하기 때문에)
