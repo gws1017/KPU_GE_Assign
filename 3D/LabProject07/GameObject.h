@@ -20,12 +20,14 @@ public:
 	void Release() { if (--m_nReferences <= 0) delete this; }
 
 protected:
-	XMFLOAT4X4 m_xmf4x4World;
+
 
 	CMesh* m_pMesh = NULL;
 
 	CShader* m_pShader = NULL;
 
+public:
+	XMFLOAT4X4 m_xmf4x4World;
 public:
 	void ReleaseUploadBuffers();
 
@@ -62,6 +64,9 @@ public:
 	//상수버퍼 갱신
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3dCommandList);
 	virtual void ReleaseShaderVariables();
+
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT
+		nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
 };
 
 class CRotatingObject : public CGameObject
