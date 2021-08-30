@@ -19,13 +19,10 @@ void CMesh::ReleaseUploadBuffers()
 	m_pd3dVertexUploadBuffer = NULL;
 };
 
-void CMesh::Render(ID3D12GraphicsCommandList* pd3dCommandList)
-{
-	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
-	Render(pd3dCommandList, 1);
-}
+
 void CMesh::Render(ID3D12GraphicsCommandList* pd3dCommandList, UINT nInstances)
 {
+	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dIndexBuffer)
 	{

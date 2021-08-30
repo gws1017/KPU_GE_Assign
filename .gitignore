@@ -451,17 +451,10 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudio,c++
 *.ilk
 *.idb
-*.pdb
 *.tlog
 *.pdb
 *.log
-*.ilk
 *.ipch
-*.ilk
-*.log
-*.pdb
-*.tlog
-*.idb
-*.log
 *.lastbuildstate
 3D/LabProject07/x64/Debug/LabProject07.tlog/unsuccessfulbuild
+3D/LabProject07/x64/Debug/LabProject07.log

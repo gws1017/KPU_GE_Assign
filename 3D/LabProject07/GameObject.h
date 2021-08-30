@@ -40,6 +40,10 @@ public:
 	virtual void OnPrepareRender();
 
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT
+		nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT
+		nInstances);
 
 	void Rotate(XMFLOAT3* pxmf3Axis, float fAngle);
 	void Rotate(float Pitch = 10.0f, float Yaw = 10.0f, float Roll = 10.0f);
@@ -65,8 +69,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* d3dCommandList);
 	virtual void ReleaseShaderVariables();
 
-	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT
-		nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
+	
 };
 
 class CRotatingObject : public CGameObject

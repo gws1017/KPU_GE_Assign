@@ -349,7 +349,7 @@ CInstancingShader::~CInstancingShader()
 
 D3D12_INPUT_LAYOUT_DESC CInstancingShader::CreateInputLayout()
 {
-	UINT nInputElementDescs = 7;
+	UINT nInputElementDescs = 2;
 	D3D12_INPUT_ELEMENT_DESC* pd3dInputElementDescs = new
 		D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 
@@ -358,18 +358,6 @@ D3D12_INPUT_LAYOUT_DESC CInstancingShader::CreateInputLayout()
 	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	pd3dInputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
 	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-
-	//인스턴싱 정보를 위한 입력 원소이다. 
-	pd3dInputElementDescs[2] = { "WORLDMATRIX", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0,
-	D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
-	pd3dInputElementDescs[3] = { "WORLDMATRIX", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16,
-	D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
-	pd3dInputElementDescs[4] = { "WORLDMATRIX", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32,
-	D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
-	pd3dInputElementDescs[5] = { "WORLDMATRIX", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48,
-	D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
-	pd3dInputElementDescs[6] = { "INSTANCECOLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,
-	64, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
@@ -403,10 +391,6 @@ void CInstancingShader::CreateShaderVariables(ID3D12Device* pd3dDevice,
 		sizeof(VS_VB_INSTANCE) * m_nObjects, D3D12_HEAP_TYPE_UPLOAD,D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 	//정점 버퍼(업로드 힙)에 대한 포인터를 저장한다. 
 	m_pd3dcbGameObjects->Map(0, NULL, (void**)&m_pcbMappedGameObjects);
-	//정점 버퍼에 대한 뷰를 생성한다.
-	m_d3dInstancingBufferView.BufferLocation = m_pd3dcbGameObjects->GetGPUVirtualAddress();
-	m_d3dInstancingBufferView.StrideInBytes = sizeof(VS_VB_INSTANCE);
-	m_d3dInstancingBufferView.SizeInBytes = sizeof(VS_VB_INSTANCE) * m_nObjects;
 }
 void CInstancingShader::ReleaseShaderVariables()
 {
@@ -416,6 +400,8 @@ void CInstancingShader::ReleaseShaderVariables()
 void CInstancingShader::UpdateShaderVariables(ID3D12GraphicsCommandList
 	* pd3dCommandList)
 {
+	pd3dCommandList->SetGraphicsRootShaderResourceView(2,
+		m_pd3dcbGameObjects->GetGPUVirtualAddress());
 	for (int j = 0; j < m_nObjects; j++)
 	{
 		m_pcbMappedGameObjects[j].m_xmcColor = (j % 2) ? XMFLOAT4(0.5f, 0.0f, 0.0f, 0.0f) :
@@ -466,5 +452,5 @@ void CInstancingShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCame
 	//모든 게임 객체의 인스턴싱 데이터를 버퍼에 저장한다. 
 	UpdateShaderVariables(pd3dCommandList);
 	//하나의 정점 데이터를 사용하여 모든 게임 객체(인스턴스)들을 렌더링한다. 
-	m_ppObjects[0]->Render(pd3dCommandList, pCamera, m_nObjects,m_d3dInstancingBufferView);
+	m_ppObjects[0]->Render(pd3dCommandList, pCamera, m_nObjects);
 }
