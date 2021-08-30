@@ -46,6 +46,9 @@ protected:
 	D3D12_RECT m_d3dScissorRect;
 
 	CPlayer* m_pPlayer = NULL;
+
+	//절두체(월드 좌표계)
+	BoundingFrustum m_xmFrustum;
 public:
 	CCamera();
 	CCamera(CCamera* pCamera);
@@ -113,7 +116,12 @@ public:
 	//카메라의 이동, 회전에 따라 카메라의 정보를 갱신하는 가상함수이다. 
 	virtual void Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed) { }
 	//3인칭 카메라에서 카메라가 바라보는 지점을 설정한다. 일반적으로 플플레이어를 바라보도록 설정한다. 
-	virtual void SetLookAt(XMFLOAT3 xmf3LookAt) { }
+	virtual void SetLookAt(XMFLOAT3& xmf3LookAt) { }
+
+	//절두체(월드 좌표계)를 생성한다. 
+	void GenerateFrustum();
+    //바운딩 박스(OOBB, 월드 좌표계)가 절두체에 포함되는 가를 검사한다. 
+	bool IsInFrustum(BoundingOrientedBox& xmBoundingBox);
 
 };
 
@@ -137,6 +145,6 @@ public:
 	CThirdPersonCamera(CCamera* pCamera);
 	virtual ~CThirdPersonCamera() { }
 	virtual void Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed);
-	virtual void SetLookAt(XMFLOAT3 vLookAt);
+	virtual void SetLookAt(XMFLOAT3& vLookAt);
 };
 
