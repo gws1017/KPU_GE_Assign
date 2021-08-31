@@ -34,6 +34,7 @@ public:
 class CMesh
 {
 public:
+	CMesh();
 	CMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual ~CMesh();
 
@@ -66,15 +67,6 @@ protected:
 
 	//모델 좌표계 OOBB 바운딩박스
 	BoundingOrientedBox m_xmBoundingBox;
-
-	//정점을 픽킹을 위하여 저장한다(정점 버퍼를 Map()하여 읽지 않아도 되도록).
-	CDiffusedVertex* m_pVertices = NULL;
-	//메쉬의 인덱스를 저장한다(인덱스 버퍼를 Map()하여 읽지 않아도 되도록).
-	UINT* m_pnIndices = NULL;
-public:
-	//광선과 메쉬의 교차를 검사하고 교차하는 횟수와 거리를 반환하는 함수이다. 
-	int CheckRayIntersection(XMFLOAT3& xmRayPosition, XMFLOAT3& xmRayDirection, float
-		* pfNearHitDistance);
 public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList);
 	BoundingOrientedBox GetBoundingBox() { return(m_xmBoundingBox); }
@@ -106,10 +98,47 @@ public:
 	virtual ~CAirplaneMeshDiffused();
 };
 
-class CSphereMeshDiffused : public CMesh
+class CIlluminatedVertex : public CVertex
+{
+protected:
+	XMFLOAT3 m_xmf3Normal;
+public:
+	CIlluminatedVertex() {
+		m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf3Normal =
+			XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+	CIlluminatedVertex(float x, float y, float z, XMFLOAT3 xmf3Normal = XMFLOAT3(0.0f,
+		0.0f, 0.0f)) {
+		m_xmf3Position = XMFLOAT3(x, y, z); m_xmf3Normal = xmf3Normal;
+	}
+	CIlluminatedVertex(XMFLOAT3 xmf3Position, XMFLOAT3 xmf3Normal = XMFLOAT3(0.0f, 0.0f,
+		0.0f)) {
+		m_xmf3Position = xmf3Position; m_xmf3Normal = xmf3Normal;
+	}
+	~CIlluminatedVertex() { }
+};
+
+class CMeshIlluminated : public CMesh
 {
 public:
-	CSphereMeshDiffused(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
-		* pd3dCommandList, float fRadius = 2.0f, int nSlices = 20, int nStacks = 20);
-	virtual ~CSphereMeshDiffused();
+	CMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
+		* pd3dCommandList);
+	virtual ~CMeshIlluminated();
+public:
+	void CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3
+		* pxmf3Positions, int nVertices);
+	void CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3
+		* pxmf3Positions, UINT nVertices, UINT* pnIndices, UINT nIndices);
+	void CalculateTriangleStripVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3
+		* pxmf3Positions, UINT nVertices, UINT* pnIndices, UINT nIndices);
+	void CalculateVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, int
+		nVertices, UINT* pnIndices, int nIndices);
+};
+
+class CCubeMeshIlluminated : public CMeshIlluminated
+{
+public:
+	CCubeMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
+		* pd3dCommandList, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f);
+	virtual ~CCubeMeshIlluminated();
 };

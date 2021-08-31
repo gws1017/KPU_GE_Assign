@@ -10,17 +10,18 @@ CGameObject::CGameObject()
 CGameObject::~CGameObject()
 {
 	if (m_pMesh) m_pMesh->Release();
-	if (m_pShader) {
-		m_pShader->ReleaseShaderVariables();
-		m_pShader->Release();
-	}
+	
+	if (m_pMaterial) m_pMaterial->Release();
 }
 
 void CGameObject::SetShader(CShader* pShader)
 {
-	if (m_pShader) m_pShader->Release();
-	m_pShader = pShader;
-	if (m_pShader) m_pShader->AddRef();
+	if (!m_pMaterial)
+	{
+		m_pMaterial = new CMaterial();
+		m_pMaterial->AddRef();
+	}
+	if (m_pMaterial) m_pMaterial->SetShader(pShader);
 }
 
 void CGameObject::SetMesh(CMesh* pMesh)
@@ -51,8 +52,15 @@ void CGameObject::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 	//게임 객체가 카메라에 보이면 렌더링한다. 
 	if (IsVisible(pCamera))
 	{
-		UpdateShaderVariables(pd3dCommandList);
-		if (m_pShader) m_pShader->Render(pd3dCommandList, pCamera);
+		OnPrepareRender();
+		if (m_pMaterial)
+		{
+			if (m_pMaterial->m_pShader)
+			{
+				m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
+				m_pMaterial->m_pShader->UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+			}
+		}
 		if (m_pMesh) m_pMesh->Render(pd3dCommandList);
 	}
 }
@@ -169,35 +177,16 @@ bool CGameObject::IsVisible(CCamera* pCamera)
 	if (pCamera) bIsVisible = pCamera->IsInFrustum(xmBoundingBox);
 	return(bIsVisible);
 }
-void CGameObject::GenerateRayForPicking(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4& xmf4x4View, XMFLOAT3* pxmf3PickRayOrigin, XMFLOAT3* pxmf3PickRayDirection)
+void CGameObject::SetMaterial(CMaterial* pMaterial)
 {
-	XMFLOAT4X4 xmf4x4WorldView = Matrix4x4::Multiply(m_xmf4x4World, xmf4x4View);
-	XMFLOAT4X4 xmf4x4Inverse = Matrix4x4::Inverse(xmf4x4WorldView);
-	XMFLOAT3 xmf3CameraOrigin(0.0f, 0.0f, 0.0f);
-	//카메라 좌표계의 원점을 모델 좌표계로 변환한다. 
-	*pxmf3PickRayOrigin = Vector3::TransformCoord(xmf3CameraOrigin, xmf4x4Inverse);
-	//카메라 좌표계의 점(마우스 좌표를 역변환하여 구한 점)을 모델 좌표계로 변환한다. 
-	*pxmf3PickRayDirection= Vector3::TransformCoord(xmf3PickPosition, xmf4x4Inverse);
-	//광선의 방향 벡터를 구한다. 
-	*pxmf3PickRayDirection = Vector3::Normalize(Vector3::Subtract(*pxmf3PickRayDirection, 
-	*pxmf3PickRayOrigin));
+	if (m_pMaterial) m_pMaterial->Release();
+	m_pMaterial = pMaterial;
+	if (m_pMaterial) m_pMaterial->AddRef();
 }
-
-int CGameObject::PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4&
-	xmf4x4View, float* pfHitDistance)
+void CGameObject::SetMaterial(UINT nReflection)
 {
-	int nIntersected = 0;
-	if (m_pMesh)
-	{
-		XMFLOAT3 xmf3PickRayOrigin, xmf3PickRayDirection;
-		//모델 좌표계의 광선을 생성한다. 
-		GenerateRayForPicking(xmf3PickPosition, xmf4x4View, &xmf3PickRayOrigin, 
-		&xmf3PickRayDirection);
-		//모델 좌표계의 광선과 메쉬의 교차를 검사한다. 
-		nIntersected = m_pMesh->CheckRayIntersection(xmf3PickRayOrigin, 
-		xmf3PickRayDirection, pfHitDistance);
-	}
-	return(nIntersected);
+	if (!m_pMaterial) m_pMaterial = new CMaterial();
+	m_pMaterial->m_nReflection = nReflection;
 }
 //게임 객체를 주어진 각도로 회전한다. 
 void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
@@ -205,4 +194,23 @@ void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
 	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(XMConvertToRadians(fPitch),
 		XMConvertToRadians(fYaw), XMConvertToRadians(fRoll));
 	m_xmf4x4World = Matrix4x4::Multiply(mtxRotate, m_xmf4x4World);
+}
+
+CMaterial::CMaterial()
+{
+	m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+CMaterial::~CMaterial()
+{
+	if (m_pShader)
+	{
+		m_pShader->ReleaseShaderVariables();
+		m_pShader->Release();
+	}
+}
+void CMaterial::SetShader(CShader* pShader)
+{
+	if (m_pShader) m_pShader->Release();
+	m_pShader = pShader;
+	if (m_pShader) m_pShader->AddRef();
 }

@@ -37,6 +37,7 @@ protected:
 	LPVOID m_pCameraUpdatedContext;
 	//플레이어에 현재 설정된 카메라이다. 
 	CCamera *m_pCamera = NULL;
+	CShader* m_pShader = NULL;
 public:
 	CPlayer();
 	virtual ~CPlayer();

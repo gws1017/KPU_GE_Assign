@@ -4,12 +4,46 @@
 
 class CShader;
 
+struct MATERIAL
+{
+	XMFLOAT4 m_xmf4Ambient;
+	XMFLOAT4 m_xmf4Diffuse;
+	XMFLOAT4 m_xmf4Specular; //(r,g,b,a=power)
+	XMFLOAT4 m_xmf4Emissive;
+};
+
+class CMaterial
+{
+public:
+	CMaterial();
+	virtual ~CMaterial();
+private:
+	int m_nReferences = 0;
+public:
+	void AddRef() { m_nReferences++; }
+	void Release() { if (--m_nReferences <= 0) delete this; }
+	//재질의 기본 색상
+	XMFLOAT4 m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	//재질의 번호
+	UINT m_nReflection = 0;
+	//재질을 적용하여 렌더링을 하기 위한 쉐이더
+	CShader* m_pShader = NULL;
+	void SetAlbedo(XMFLOAT4& xmf4Albedo) { m_xmf4Albedo = xmf4Albedo; }
+	void SetReflection(UINT nReflection) { m_nReflection = nReflection; }
+	void SetShader(CShader* pShader);
+};
+
+
+
 class CGameObject
 {
 public:
 	CGameObject();
 
 	virtual ~CGameObject();
+
+	XMFLOAT4X4 m_xmf4x4World;
+	CMaterial* m_pMaterial = NULL;
 
 private:
 	int m_nReferences = 0;
@@ -20,11 +54,8 @@ public:
 	void Release() { if (--m_nReferences <= 0) delete this; }
 
 protected:
-	XMFLOAT4X4 m_xmf4x4World;
-
 	CMesh* m_pMesh = NULL;
-
-	CShader* m_pShader = NULL;
+	
 
 public:
 	void ReleaseUploadBuffers();
@@ -59,12 +90,10 @@ public:
 	//게임 객체가 카메라에 보인는 가를 검사한다. 
 	bool IsVisible(CCamera *pCamera=NULL);
 
-	//모델 좌표계의 픽킹 광선을 생성한다. 
-	void GenerateRayForPicking(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4& xmf4x4View, 
-	XMFLOAT3* pxmf3PickRayOrigin, XMFLOAT3* pxmf3PickRayDirection);
-	//카메라 좌표계의 한 점에 대한 모델 좌표계의 픽킹 광선을 생성하고 객체와의 교차를 검사한다. 
-	int PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4& xmf4x4View, 
-	float* pfHitDistance);
+	void SetMaterial(CMaterial* pMaterial);
+	void SetMaterial(UINT nReflection);
+
+	
 
 public:
 	//상수버퍼 생성
@@ -91,3 +120,4 @@ public:
 	
 	virtual void Animate(float fTimeElapsed);
 };
+
