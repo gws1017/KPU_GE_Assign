@@ -1,7 +1,7 @@
 #pragma comment(lib,"ws2_32")
 #include <winsock2.h>
 #include <iostream>
-
+#include <bitset>
 //챕터2 연습문제 1번
 
 using namespace std;
@@ -23,9 +23,13 @@ int main()
 	szSystemStatus : Running
 	*/
 
-
-	cout << "wVersion : " << wsa.wVersion << endl;
-	cout << "wHighVersion : " << wsa.wHighVersion << endl;
+	int major, minor;
+	major = LOBYTE(wsa.wVersion); //하위8비트만 읽어오는 매크로 (주버전)
+	minor = HIBYTE(wsa.wVersion); //상위8비트만 읽어오는 매크로 (부버전)
+	cout << "wVersion : "  << minor << "." << major << endl; //현재 사용중인 소켓의 버전을 출력
+	major = LOBYTE(wsa.wHighVersion);
+	minor = HIBYTE(wsa.wHighVersion);
+	cout << "wHighVersion : " << minor << "." << major  << endl;//현재 사용가능한 소켓의 상위버전을 출력
 	cout << "szDescription : " << wsa.szDescription << endl;
 	cout << "szSystemStatus : " << wsa.szSystemStatus << endl;
 
