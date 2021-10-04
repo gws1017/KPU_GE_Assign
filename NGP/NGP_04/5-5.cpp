@@ -7,12 +7,13 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
 using namespace std;
 
 //Client
-#define IP "172.30.1.56"
-#define PORT 5333
-#define BSIZE 512
+#define IP "127.0.0.1"
+#define PORT 53333
+#define BSIZE 2048
 void err_quit(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -56,9 +57,12 @@ int main(int argc, char* argv[])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = inet_addr(IP);
 	serv_addr.sin_port = htons(PORT);
+	cout << "서버 주소 : " << inet_ntoa(serv_addr.sin_addr) << endl;
 
+	cout << "연결 요청중" << endl;
 	retval = connect(clnt_sock, (SOCKADDR*)&serv_addr, sizeof(serv_addr));
-	if (retval == SOCKET_ERROR) err_quit("connecnt");
+	if (retval == SOCKET_ERROR) err_quit("connect");
+	cout << "연결 완료" << endl;
 
 	int fn_len = strlen(argv[1]);
 	retval = send(clnt_sock, (char *)&fn_len, sizeof(int), 0);
@@ -68,24 +72,72 @@ int main(int argc, char* argv[])
 	if (retval == SOCKET_ERROR) err_display("send()");
 	cout << "파일명 전송함" << endl;
 
-	char buf[BSIZE + 1];
 	int data_len;
 	ifstream in(argv[1],ios::binary);
-	while (in.read((char*)buf, sizeof(buf))) {
-		data_len = sizeof(buf);
-		retval = send(clnt_sock, (char *)&data_len, sizeof(int), 0);
-		if (retval == SOCKET_ERROR)
-		{
-			err_display("send()");
-			break;
-		}
-		retval = send(clnt_sock, buf, sizeof(buf), 0);
-		if (retval == SOCKET_ERROR)
-		{
-			err_display("send()");
-			break;
-		}
+	if (!in)
+	{
+		cout << "파일을 열 수 없다" << endl;
 	}
+	
+	vector<char> v(istreambuf_iterator<char>{in}, istreambuf_iterator<char>{});
+
+	char buf[BSIZE + 1];
+	ZeroMemory(buf, BSIZE);
+	data_len = v.size();
+	retval = send(clnt_sock, (char*)&data_len, sizeof(int), 0);
+	if (retval == SOCKET_ERROR)
+	{
+		err_display("send()");
+		
+	}
+
+	cout << "데이터 길이 전송 : " << data_len << endl;
+
+	auto s = v.begin();
+	int i = 0;
+	int left = data_len;
+	int sending;
+	while (s < v.end())
+	{
+		if (i > BSIZE)
+		{
+			buf[BSIZE] = '\0';
+			sending = send(clnt_sock, buf, sizeof(char)* BSIZE, 0);
+			if (sending == SOCKET_ERROR)
+			{
+				err_display("send()");
+				break;
+			}
+			else if (sending == 0) break;
+			cout << "데이터 전송 : " << buf << endl;
+			cout << "데이터 전송 남은량 : " << left << endl;
+			cout << "데이터 전송량 : " << sending << endl;
+
+
+			left -= sending;
+			++s;
+			i = -1;
+			ZeroMemory(buf, BSIZE);
+		}
+		if (i != -1)
+		{
+			buf[i] = *s;
+			++s;
+			++i;
+
+		}
+		if (i == -1) i = 0;
+	}
+
+	if (i != 0)
+	{
+		retval = send(clnt_sock, buf, sizeof(char)*i, 0);
+		if (retval == SOCKET_ERROR)
+			err_display("send()");
+
+	}
+
+		
 
 	closesocket(clnt_sock);
 	
