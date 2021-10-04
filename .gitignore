@@ -2,3 +2,14 @@
 *.suo
 *.db
 *.ipch
+*.ilk
+*.pch
+*.pdb
+*.log
+*.idb
+*.tlog
+*.db-shm
+*.db-wal
+*.opendb
+*.exe
+*.recipe
