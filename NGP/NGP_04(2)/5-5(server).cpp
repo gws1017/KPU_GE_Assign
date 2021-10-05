@@ -38,11 +38,11 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 	int received;
 	char* ptr = buf;
 	int left = len; //받은 데이터의 남은량을 기록하는 변수
-
 	
 
 	while (left > 0)
 	{
+		
 		received = recv(s, ptr, left, flags);
 		if (received == SOCKET_ERROR) return SOCKET_ERROR;
 		else if (received == 0) break;
@@ -52,30 +52,44 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 }
 
 //파일을 받으면서 쓰는 함수
-int recvnf(SOCKET s, char* buf, int len, int flags, char* fn)
+int recvnf(SOCKET s, char* buf, long len, int flags, char* fn)
 {
-	int received;
-	char* ptr=buf;
-	int left = len; //받은 데이터의 남은량을 기록하는 변수
 	ofstream out(fn, ios::binary);
-
+	char* ptr=buf;
+	long received;
+	long left = len; //받은 데이터의 남은량을 기록하는 변수
+	long data_len;
+	long retval;
+	float percent;
 	
-
 	while (left > 0)
 	{
-		received = recv(s, ptr, sizeof(char)*BSIZE, flags);
+		percent = (float)(len - left) / (float)len * 100.0f;
+
+		//데이터 길이먼저받아야함
+		retval = recvn(s, (char*)&data_len, sizeof(long), 0);
+		if (retval == SOCKET_ERROR)
+		{
+			err_display("recv()");
+			break;
+		}
+		cout << "data_len : " << data_len << endl;
+
+		received = recv(s, ptr, sizeof(char)* data_len, flags);
 		if (received == SOCKET_ERROR) return SOCKET_ERROR;
-		else if (received == 0) break;
-		ptr[received] = '\0';
-		
-		cout << "받은양 :" << left << endl;
-		cout << "받은 데이터의 길이 :" << received << endl;
-		cout << "받은 데이터 :" << ptr << endl;
+
+		cout << "\r전송률 :" << percent;
 
 		out.write((char*)ptr, sizeof(char) * received);
 		left -= received;
 		ptr += received;
+		if (left == 0)
+		{
+			cout << "\r전송률 :" << percent << endl;
+			break;
+		}
 	}
+	
 
 }
 
@@ -132,6 +146,7 @@ int main(int argc, char* argv[])
 			err_display("recv()");
 			break;
 		}
+		cout << "file_len : "<< fn_len << endl;
 		//파일이름 입력 받기
 		retval = recvn(clnt_sock, file_name, fn_len, 0);
 		if (retval == SOCKET_ERROR)
@@ -142,29 +157,32 @@ int main(int argc, char* argv[])
 		file_name[fn_len] = '\0';
 		cout << "파일 명 : " << file_name << endl;
 
-		int data_len;
-		char buf[BSIZE + 1];
+		long file_size;
+		char buf[BSIZE ];
 		ZeroMemory(buf, BSIZE);
 
-		//데이터 길이먼저받아야함
-		retval = recvn(clnt_sock, (char*)&data_len, sizeof(int), 0);
+		retval = recvn(clnt_sock, (char*)&file_size, sizeof(long), 0);
 		if (retval == SOCKET_ERROR)
 		{
 			err_display("recv()");
 			break;
 		}
-		cout<< "data_len : " << data_len << endl;
-		//파일쓰기모드로 데이터 받기
-		retval = recvnf(clnt_sock, buf, data_len, 0,file_name);
-		if (retval == SOCKET_ERROR)
-		{
-			err_display("recv()");
-			break;
-		}
+		cout << "file_size : " << file_size << endl;
+
+			//파일쓰기모드로 데이터 받기
+			retval = recvnf(clnt_sock, buf, file_size, 0, file_name);
+			if (retval == SOCKET_ERROR)
+			{
+				err_display("recv()");
+				break;
+			}
+			
+	
+		
 		
 
 		closesocket(clnt_sock);
-		cout << "클라이언트 종료" << endl;
+		cout << endl << "클라이언트 종료" << endl;
 	}
 
 	

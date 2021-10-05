@@ -7,7 +7,7 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <filesystem>
 using namespace std;
 
 //Client
@@ -43,14 +43,14 @@ int main(int argc, char* argv[])
 {
 	cout << "파일명 : "<< argv[1] << endl;
 
-	int retval;
+	long retval;
 
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
 	
-	SOCKET clnt_sock = socket(AF_INET,SOCK_STREAM,0);
-	if (clnt_sock == INVALID_SOCKET) err_quit("socket()");
+	SOCKET serv_sock = socket(AF_INET,SOCK_STREAM,0);
+	if (serv_sock == INVALID_SOCKET) err_quit("socket()");
 
 	SOCKADDR_IN serv_addr;
 	ZeroMemory(&serv_addr, sizeof(serv_addr));
@@ -60,86 +60,71 @@ int main(int argc, char* argv[])
 	cout << "서버 주소 : " << inet_ntoa(serv_addr.sin_addr) << endl;
 
 	cout << "연결 요청중" << endl;
-	retval = connect(clnt_sock, (SOCKADDR*)&serv_addr, sizeof(serv_addr));
+	retval = connect(serv_sock, (SOCKADDR*)&serv_addr, sizeof(serv_addr));
 	if (retval == SOCKET_ERROR) err_quit("connect");
 	cout << "연결 완료" << endl;
 
-	int fn_len = strlen(argv[1]);
-	retval = send(clnt_sock, (char *)&fn_len, sizeof(int), 0);
+	int fn_len = strlen(argv[1])+1;
+	retval = send(serv_sock, (char *)&fn_len, sizeof(int), 0);
 	if (retval == SOCKET_ERROR) err_display("send()");
 	
-	retval = send(clnt_sock, argv[1], sizeof(argv[1]), 0);
+	retval = send(serv_sock, argv[1], fn_len, 0);
 	if (retval == SOCKET_ERROR) err_display("send()");
 	cout << "파일명 전송함" << endl;
 
-	int data_len;
+	long data_len;
 	ifstream in(argv[1],ios::binary);
 	if (!in)
 	{
 		cout << "파일을 열 수 없다" << endl;
 	}
 	
-	vector<char> v(istreambuf_iterator<char>{in}, istreambuf_iterator<char>{});
 
-	char buf[BSIZE + 1];
+	char buf[BSIZE];
 	ZeroMemory(buf, BSIZE);
-	data_len = v.size();
-	retval = send(clnt_sock, (char*)&data_len, sizeof(int), 0);
+	
+
+
+	in.seekg(0, ios::end);
+	long left = in.tellg();
+	cout << "left" << left << endl;
+	in.seekg(0, ios::beg);
+
+	retval = send(serv_sock, (char*)&left, sizeof(long), 0);
 	if (retval == SOCKET_ERROR)
 	{
-		err_display("send()");
-		
+		err_display("send(file_size)");
+
 	}
 
-	cout << "데이터 길이 전송 : " << data_len << endl;
-
-	auto s = v.begin();
-	int i = 0;
-	int left = data_len;
-	int sending;
-	while (s < v.end())
+	while (1)
 	{
-		if (i > BSIZE)
-		{
-			buf[BSIZE] = '\0';
-			sending = send(clnt_sock, buf, sizeof(char)* BSIZE, 0);
-			if (sending == SOCKET_ERROR)
-			{
-				err_display("send()");
-				break;
-			}
-			else if (sending == 0) break;
-			cout << "데이터 전송 : " << buf << endl;
-			cout << "데이터 전송 남은량 : " << left << endl;
-			cout << "데이터 전송량 : " << sending << endl;
+		in.read(buf, sizeof(buf));
+		data_len = in.gcount();
 
-
-			left -= sending;
-			++s;
-			i = -1;
-			ZeroMemory(buf, BSIZE);
-		}
-		if (i != -1)
-		{
-			buf[i] = *s;
-			++s;
-			++i;
-
-		}
-		if (i == -1) i = 0;
-	}
-
-	if (i != 0)
-	{
-		retval = send(clnt_sock, buf, sizeof(char)*i, 0);
+		retval = send(serv_sock, (char*)&data_len, sizeof(long), 0);
 		if (retval == SOCKET_ERROR)
+		{
+			err_display("send(data_len)");
+
+		}
+
+		retval = send(serv_sock, buf, sizeof(char) * data_len, 0);
+		if (retval == SOCKET_ERROR)
+		{
 			err_display("send()");
+			break;
+		}
+			
+		left -= data_len;
+		cout << "left 길이 : " << left << endl;
 
+		if (left == 0) break;
 	}
+	
 
-		
 
-	closesocket(clnt_sock);
+	closesocket(serv_sock);
 	
 	WSACleanup();
 	return 0;
