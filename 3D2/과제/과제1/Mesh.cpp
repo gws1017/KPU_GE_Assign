@@ -20,8 +20,8 @@ CMesh::~CMesh()
 void CMesh::ReleaseUploadBuffers() 
 {
 	if (m_pd3dVertexUploadBuffer) m_pd3dVertexUploadBuffer->Release();
-	m_pd3dVertexUploadBuffer = NULL;
 	if (m_pd3dIndexUploadBuffer) m_pd3dIndexUploadBuffer->Release();
+	m_pd3dVertexUploadBuffer = NULL;
 	m_pd3dIndexUploadBuffer = NULL;
 };
 
@@ -356,66 +356,53 @@ XMFLOAT3 CHeightMapImage::GetHeightMapNormal(int x, int z)
 }
 
 #define _WITH_APPROXIMATE_OPPOSITE_CORNER
-float CHeightMapImage::GetHeight(float fx, float fz)
+float CHeightMapImage::GetHeight(float fx, float fz, bool bReverseQuad)
 {
-	/*지형의 좌표 (fx, fz)는 이미지 좌표계이다. 높이 맵의 x-좌표와 z-좌표가 높이 맵의 범위를 벗어나면 지형의 높이는
-	0이다.*/
+	fx = fx / m_xmf3Scale.x;
+	fz = fz / m_xmf3Scale.z;
 	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) return(0.0f);
-	//높이 맵의 좌표의 정수 부분과 소수 부분을 계산한다. 
+
 	int x = (int)fx;
 	int z = (int)fz;
 	float fxPercent = fx - x;
 	float fzPercent = fz - z;
+
 	float fBottomLeft = (float)m_pHeightMapPixels[x + (z * m_nWidth)];
 	float fBottomRight = (float)m_pHeightMapPixels[(x + 1) + (z * m_nWidth)];
 	float fTopLeft = (float)m_pHeightMapPixels[x + ((z + 1) * m_nWidth)];
 	float fTopRight = (float)m_pHeightMapPixels[(x + 1) + ((z + 1) * m_nWidth)];
 #ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
-	//z-좌표가 1, 3, 5, ...인 경우 인덱스가 오른쪽에서 왼쪽으로 나열된다. 
-	bool bRightToLeft = ((z % 2) != 0);
-	if (bRightToLeft)
+	if (bReverseQuad)
 	{
-		/*지형의 삼각형들이 오른쪽에서 왼쪽 방향으로 나열되는 경우이다. 다음 그림의 오른쪽은 (fzPercent < fxPercent)
-		인 경우이다. 이 경우 TopLeft의 픽셀 값은 (fTopLeft = fTopRight + (fBottomLeft - fBottomRight))로 근사한다. 
-		다음 그림의 왼쪽은 (fzPercent ≥ fxPercent)인 경우이다. 
-		이 경우 BottomRight의 픽셀 값은 (fBottomRight = fBottomLeft + (fTopRight - fTopLeft))로 근사한다.
-		삼각형이 오른쪽에서 왼쪽으로 나열되는 경우*/
-		
-			if (fzPercent >= fxPercent)
-				fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
-			else
-				fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
+		if (fzPercent >= fxPercent)
+			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
+		else
+			fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
 	}
 	else
 	{
-		/*지형의 삼각형들이 왼쪽에서 오른쪽 방향으로 나열되는 경우이다. 
-		다음 그림의 왼쪽은 (fzPercent < (1.0f - fxPercent))인 경우이다. 
-		이 경우 TopRight의 픽셀 값은 (fTopRight = fTopLeft + (fBottomRight - fBottomLeft))로
-		근사한다. 다음 그림의 오른쪽은 (fzPercent ≥ (1.0f - fxPercent))인 경우이다. 
-		이 경우 BottomLeft의 픽셀 값은 (fBottomLeft = fTopLeft + (fBottomRight - fTopRight))로 근사한다.
-		삼각형이 왼쪽에서 오른쪽으로 나열되는 경우*/
-		
-			if (fzPercent < (1.0f - fxPercent))
-				fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
-			else
-				fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
+		if (fzPercent < (1.0f - fxPercent))
+			fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
+		else
+			fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
 	}
 #endif
-	//사각형의 네 점을 보간하여 높이(픽셀 값)를 계산한다. 
 	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
+
 	return(fHeight);
 }
 
 CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device* pd3dDevice,
 	ID3D12GraphicsCommandList* pd3dCommandList, int xStart, int zStart, int nWidth, int
-	nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void* pContext) : CMesh(pd3dDevice,
-		pd3dCommandList)
+	nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void* pContext) : CMesh(pd3dDevice, pd3dCommandList)
 {
 	//격자의 교점(정점)의 개수는 (nWidth * nLength)이다. 
 	m_nVertices = nWidth * nLength;
 	m_nStride = sizeof(CDiffusedVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
 	//격자는 삼각형 스트립으로 구성한다.
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 	m_nWidth = nWidth;

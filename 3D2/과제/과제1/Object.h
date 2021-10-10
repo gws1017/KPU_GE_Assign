@@ -133,7 +133,6 @@ public:
 	int								m_nMeshes;
 
 	CMaterial						*m_pMaterial = NULL;
-	//CShader							* m_pShader = NULL;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE		m_d3dCbvGPUDescriptorHandle;
 
@@ -236,8 +235,7 @@ private:
 	
 public:
 	//지형의 높이를 계산하는 함수이다(월드 좌표계). 높이 맵의 높이에 스케일의 y를 곱한 값이다. 
-	float GetHeight(float x, float z) { return(m_pHeightMapImage->GetHeight(x /
-	m_xmf3Scale.x, z / m_xmf3Scale.z)* m_xmf3Scale.y);}
+	float GetHeight(float x, float z, bool bReverseQuad = false) { return(m_pHeightMapImage->GetHeight(x , z ,bReverseQuad) * m_xmf3Scale.y);}
 
 	//지형의 법선 벡터를 계산하는 함수이다(월드 좌표계). 높이 맵의 법선 벡터를 사용한다. 
 	XMFLOAT3 GetNormal(float x, float z) {return(m_pHeightMapImage->GetHeightMapNormal(int(x / m_xmf3Scale.x), int(z /

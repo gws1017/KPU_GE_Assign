@@ -21,7 +21,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다. 
 	XMFLOAT3 xmf3Scale(8.0f, 2.0f, 8.0f);
-	XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
+	XMFLOAT4 xmf4Color(0.0f, 0.5f, 0.0f, 0.0f);
 	//지형을 높이 맵 이미지 파일(HeightMap.raw)을 사용하여 생성한다. 높이 맵의 크기는 가로x세로(257x257)이다. 
 #ifdef _WITH_TERRAIN_PARTITION
 	/*하나의 격자 메쉬의 크기는 가로x세로(17x17)이다. 지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메
@@ -36,15 +36,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 		257, xmf3Scale, xmf4Color);
 #endif
 
-	m_nShaders = 1;
-	m_ppShaders = new CShader*[m_nShaders];
 
-	CObjectsShader *pObjectShader = new CObjectsShader();
+	m_nShaders = 1;
+	m_ppShaders = new CShader * [m_nShaders];
+
+	CObjectsShader* pObjectShader = new CObjectsShader();
 	pObjectShader->CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature);
 	pObjectShader->BuildObjects(pd3dDevice, pd3dCommandList, m_pTerrain);
 	m_ppShaders[0] = pObjectShader;
-
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 void CScene::ReleaseObjects()
@@ -58,15 +57,11 @@ void CScene::ReleaseObjects()
 				m_ppShaders[i]->ReleaseShaderVariables();
 				m_ppShaders[i]->ReleaseObjects();
 				m_ppShaders[i]->Release();
-			
-			
 		}
 		delete[] m_ppShaders;
 	}
 
 	if (m_pTerrain) delete m_pTerrain;
-
-	ReleaseShaderVariables();
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -150,17 +145,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	return(pd3dGraphicsRootSignature);
 }
 
-void CScene::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
-{
-}
 
-void CScene::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
-{
-}
-
-void CScene::ReleaseShaderVariables()
-{
-}
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
@@ -193,8 +178,6 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	pCamera->UpdateShaderVariables(pd3dCommandList);
 
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-
-	UpdateShaderVariables(pd3dCommandList);
 
 	for (int i = 0; i < m_nShaders; i++)
 	{

@@ -49,7 +49,6 @@ public:
 	void CreateCbvSrvDescriptorHeaps(ID3D12Device* pd3dDevice, int nConstantBufferViews, int nShaderResourceViews);
 	void CreateConstantBufferViews(ID3D12Device* pd3dDevice, int nConstantBufferViews, ID3D12Resource* pd3dConstantBuffers, UINT nStride);
 	void CreateShaderResourceViews(ID3D12Device* pd3dDevice, CTexture* pTexture, UINT nDescriptorHeapIndex, UINT nRootParameterStartIndex);
-	void CreateShaderResourceView(ID3D12Device* pd3dDevice, CTexture* pTexture, int nIndex);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() { return(m_pd3dCbvSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()); }
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() { return(m_pd3dCbvSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart()); }
@@ -60,7 +59,8 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSrvDescriptorStartHandle() { return(m_d3dSrvGPUDescriptorStartHandle); }
 
 protected:
-	ID3D12PipelineState					*m_pd3dPipelineState = NULL;
+	ID3D12PipelineState					** m_ppd3dPipelineStates = NULL;
+	int									m_nPipelineStates = 0;
 
 	ID3D12DescriptorHeap				*m_pd3dCbvSrvDescriptorHeap = NULL;
 
@@ -106,7 +106,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-#define _WITH_BATCH_MATERIAL
+//#define _WITH_BATCH_MATERIAL
 
 class CObjectsShader : public CTexturedShader
 {
@@ -132,11 +132,14 @@ protected:
 
 	ID3D12Resource					*m_pd3dcbGameObjects = NULL;
 	CB_GAMEOBJECT_INFO				*m_pcbMappedGameObjects = NULL;
+#ifdef _WITH_BATCH_MATERIAL
+	CMaterial* m_pMaterial = NULL;
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CTerrainShader : public CShader
+class CTerrainShader : public CTexturedShader
 {
 public:
 	CTerrainShader();
