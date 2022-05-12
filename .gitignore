@@ -17,3 +17,15 @@
 3D2/과제/참고자료/지형 예제코드(따라하기)/LabProject14/Release/Scene.obj
 3D2/과제/참고자료/지형 예제코드(따라하기)/LabProject14/Release/
 3D2/과제/참고자료/지형 예제코드(따라하기)/LabProject14/x64/Debug/
+*.obj
+*.ico
+*.rc
+*.filters
+*.user
+*.bin
+*.png
+*.TIF
+*.jpg
+*.dds
+*.raw
+*.wav
