@@ -8,12 +8,12 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY.
 */
 
-#include "stdafx.h"
+#include "../Header/stdafx.h"
 #include <iostream>
-#include "Dependencies\glew.h"
-#include "Dependencies\freeglut.h"
+#include "../Dependencies\glew.h"
+#include "../Dependencies\freeglut.h"
 
-#include "Renderer.h"
+#include "../Header/Renderer.h"
 
 Renderer *g_Renderer = NULL;
 

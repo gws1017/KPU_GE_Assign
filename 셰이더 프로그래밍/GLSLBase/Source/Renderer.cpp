@@ -1,6 +1,6 @@
-#include "stdafx.h"
-#include "Renderer.h"
-#include "LoadPng.h"
+#include "../Header/stdafx.h"
+#include "../Header/Renderer.h"
+#include "../Header/LoadPng.h"
 #include <Windows.h>
 #include <cstdlib>
 #include <cassert>
