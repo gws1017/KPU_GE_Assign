@@ -19,10 +19,13 @@ public:
 
 	GLuint CreatePngTexture(char * filePath);
 	GLuint CreateBmpTexture(char * filePath);
+
+	void CreateParticle(int count);
 	   
 	void Test();
 	void Lecture2();
 	void Lecture3();
+	void Lecture3Particle();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	bool ReadFile(char* filename, std::string *target);
@@ -33,6 +36,7 @@ private:
 
 	bool m_Initialized = false;
 	
+
 	unsigned int m_WindowSizeX = 0;
 	unsigned int m_WindowSizeY = 0;
 
@@ -54,7 +58,15 @@ private:
 
 	GLuint m_VBOLecture2 = 0;
 	GLuint m_VBOLecture3 = 0;
+	
 
 	GLuint m_Lecture3Shader = 0;
+
+	GLuint m_Lecture3ParticleShader = 0;
+
+	GLuint m_VBOSingleParticleQuad = 0;
+
+	GLuint m_VBOManyParticle = 0;
+	GLuint m_VBOManyParticleVertexCount = 0;
 };
 
