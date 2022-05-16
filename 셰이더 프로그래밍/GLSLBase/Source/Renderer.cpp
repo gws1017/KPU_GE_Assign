@@ -340,7 +340,7 @@ GLuint Renderer::CreateBmpTexture(char * filePath)
 
 void Renderer::CreateParticle(int count)
 {
-	int floatCount = count * (3 + 3 + 1 + 1 + 1 + 1 +1) * 3 * 2; //(x, y, z, vx, vy, vz, emit, life,amp,period, value)
+	int floatCount = count * (3 + 3 + 1 + 1 + 1 + 1 +1 + 4) * 3 * 2; //(x, y, z, vx, vy, vz, emit, life,amp,period, value, r, g, b ,a)
 	float* particleVertices = new float[floatCount];
 	int vertexCount = count * 3 * 2;
 	int index = 0;
@@ -358,7 +358,8 @@ void Renderer::CreateParticle(int count)
 		float randomAmp = 0.f;
 		float randomPeriod = 0.f;
 		float randomValue = 0.f;
-
+		float randomR, randomG, randomB, randomA = 0.f;
+		std::array<float,4> randomRGBA = {0.f};
 		randomValueX = 0.f; //-1~1
 		randomValueY = 0.f; //-1~1
 		randomValueZ = 0.f;
@@ -370,6 +371,13 @@ void Renderer::CreateParticle(int count)
 		randomAmp =  ((float)rand() / (float)RAND_MAX) * 0.4f - 0.2f;
 		randomPeriod = ((float)rand() / (float)RAND_MAX) * 2.f;
 		randomValue = ((float)rand() / (float)RAND_MAX) * 1.f;
+		for (auto& color : randomRGBA)
+			color = ((float)rand() / (float)RAND_MAX) * 1.f;
+		randomRGBA[3] = 1.f;
+		randomR = ((float)rand() / (float)RAND_MAX) * 1.f;
+		randomG = ((float)rand() / (float)RAND_MAX) * 1.f;
+		randomB = ((float)rand() / (float)RAND_MAX) * 1.f;
+		randomA = 1.f;
 
 		//v0
 		particleVertices[index] = -particleSize / 2.f + randomValueX;
@@ -394,7 +402,16 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
-
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
+		//particleVertices[index] = randomR;
+		//index++; //Random Color
+		//particleVertices[index] = randomG;
+		//index++; //Random Color
+		//particleVertices[index] = randomB;
+		//index++; //Random Color
+		//particleVertices[index] = randomA;
+		//index++; //Random Color
 		//v1
 		particleVertices[index] = particleSize / 2.f + randomValueX;
 		index++;
@@ -418,7 +435,8 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
-
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
 		//v2
 		particleVertices[index] = particleSize / 2.f + randomValueX;
 		index++;
@@ -442,6 +460,8 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
 
 		//v3
 		particleVertices[index] = -particleSize / 2.f + randomValueX;
@@ -466,6 +486,8 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
 
 		//v4
 		particleVertices[index] = particleSize / 2.f + randomValueX;
@@ -490,6 +512,8 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
 
 		//v5
 		particleVertices[index] = -particleSize / 2.f + randomValueX;
@@ -514,6 +538,8 @@ void Renderer::CreateParticle(int count)
 		index++; //Period
 		particleVertices[index] = randomValue;
 		index++; //Value
+		for (const auto& random_color : randomRGBA)
+			particleVertices[index++] = random_color;
 
 	}
 	glGenBuffers(1, &m_VBOManyParticle);
@@ -590,7 +616,7 @@ void Renderer::Lecture3Particle() // x y z vx vy vz et lt
 	GLuint shader = m_Lecture3ParticleShader;
 	glUseProgram(shader);
 
-	int attribCount = 11;
+	int attribCount = (3 + 3 + 1 + 1 + 1 + 1 + 1 + 4);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOManyParticle);
 	int attribPosition = glGetAttribLocation(shader, "a_Position");
@@ -620,6 +646,10 @@ void Renderer::Lecture3Particle() // x y z vx vy vz et lt
 	int attribRandomValue = glGetAttribLocation(shader, "a_RandomValue");
 	glEnableVertexAttribArray(attribRandomValue);
 	glVertexAttribPointer(attribRandomValue, 1, GL_FLOAT, GL_FALSE, sizeof(float) * attribCount, (GLvoid*)(sizeof(float) * 10));
+
+	int attribColor = glGetAttribLocation(shader, "a_Color");
+	glEnableVertexAttribArray(attribColor);
+	glVertexAttribPointer(attribColor,4, GL_FLOAT, GL_FALSE, sizeof(float) * attribCount, (GLvoid*)(sizeof(float) * 11));
 
 	int uniformLocTime = glGetUniformLocation(shader, "u_time");
 	glUniform1f(uniformLocTime, gTime);

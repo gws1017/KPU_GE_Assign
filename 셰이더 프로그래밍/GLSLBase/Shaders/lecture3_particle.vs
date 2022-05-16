@@ -7,14 +7,17 @@ in float a_LifeTime;
 in float a_Amp;
 in float a_Period;
 in float a_RandomValue;
+in vec4 a_Color;
+
+out vec4 v_Color;
 
 uniform float u_time;
 uniform vec3 u_Accel;
-uniform bool bLoop = true; // !!
+uniform bool bLoop = true; //½ÃÇè
 
 const float g_PI = 3.14;
 const mat3 g_RotMat = mat3(0, -1, 0, 1, 0, 0, 0, 0, 0);
-const vec3 g_Gravity = vec3(0,-4.8,0);
+const vec3 g_Gravity = vec3(0,-0.5,0);
 void main()
 {
 	vec3 newPos;
@@ -34,6 +37,7 @@ void main()
 			float fractional = fract(temp);
 			t = fractional * a_LifeTime;
 			tt = t*t;
+			v_Color = a_Color * (1.0 - fractional);
 		}
 		float period = a_Period;
 		float amp = a_Amp;
@@ -47,6 +51,7 @@ void main()
 	else
 	{
 		newPos = vec3(-100000,-100000,-100000);
+		v_Color = vec4(0,0,0,0);
 	}
 	
 	gl_Position = vec4(newPos, 1);
