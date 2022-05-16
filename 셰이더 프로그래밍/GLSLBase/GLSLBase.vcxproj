@@ -154,6 +154,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="Shaders\FSSandbox.fs" />
+    <None Include="Shaders\FSSandbox.vs" />
     <None Include="Shaders\lecture3.fs" />
     <None Include="Shaders\lecture3.vs" />
     <None Include="Shaders\lecture3_particle.fs" />

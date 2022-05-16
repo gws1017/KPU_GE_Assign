@@ -26,6 +26,7 @@ public:
 	void Lecture2();
 	void Lecture3();
 	void Lecture3Particle();
+	void Lecture4FSSand();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	bool ReadFile(char* filename, std::string *target);
@@ -68,5 +69,8 @@ private:
 
 	GLuint m_VBOManyParticle = 0;
 	GLuint m_VBOManyParticleVertexCount = 0;
+
+	GLuint m_VBOSandbox = 0;
+	GLuint m_FSSandboxShader = 0;
 };
 

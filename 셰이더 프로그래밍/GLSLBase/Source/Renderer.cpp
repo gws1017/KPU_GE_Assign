@@ -28,6 +28,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_Lecture3Shader = CompileShaders("./Shaders/lecture3.vs", "./Shaders/lecture3.fs");
 	m_Lecture3ParticleShader = CompileShaders("./Shaders/lecture3_particle.vs", "./Shaders/lecture3_particle.fs");
+	m_FSSandboxShader = CompileShaders("./Shaders/FSSandbox.vs", "./Shaders/FSSandbox.fs");
 	//Create VBOs
 	CreateVertexBufferObjects();
 	//CreateParticle
@@ -111,6 +112,21 @@ void Renderer::CreateVertexBufferObjects()
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOSingleParticleQuad);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture3_singleParticle), lecture3_singleParticle, GL_STATIC_DRAW);
 
+	float rectSize = 0.5f;
+	float lecture4_rect[]
+		=
+	{
+		-rectSize,-rectSize,0.0, 1,1,1,1, //x,y,z ,r, g, b, a
+		 rectSize, rectSize,0.0, 1,1,1,1,
+		-rectSize, rectSize,0.0, 1,1,1,1, //triangle1
+		-rectSize,-rectSize,0.0, 1,1,1,1,
+		 rectSize,-rectSize,0.0, 1,1,1,1,
+		 rectSize, rectSize,0.0, 1,1,1,1, //triangle2
+	};//21+ 9
+
+	glGenBuffers(1, &m_VBOSandbox);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOSandbox);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture4_rect), lecture4_rect, GL_STATIC_DRAW);
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -358,13 +374,13 @@ void Renderer::CreateParticle(int count)
 		float randomAmp = 0.f;
 		float randomPeriod = 0.f;
 		float randomValue = 0.f;
-		float randomR, randomG, randomB, randomA = 0.f;
+		
 		std::array<float,4> randomRGBA = {0.f};
 		randomValueX = 0.f; //-1~1
 		randomValueY = 0.f; //-1~1
 		randomValueZ = 0.f;
-		randomValueVX =  ((float)rand() / (float)RAND_MAX - 0.5f) * 2.f; //-1~1
-		randomValueVY =  ((float)rand() / (float)RAND_MAX - 0.5f) * 2.f; //-1~1
+		randomValueVX =  ((float)rand() / (float)RAND_MAX - 0.5f) * 0.1f; //-1~1
+		randomValueVY =  ((float)rand() / (float)RAND_MAX - 0.5f) * 0.1f; //-1~1
 		randomValueVZ = 0.f;
 		randomEmitTIme = ((float)rand() / (float)RAND_MAX ) * 5.f;
 		randomLifeTIme = ((float)rand() / (float)RAND_MAX) * 2.f;
@@ -374,10 +390,7 @@ void Renderer::CreateParticle(int count)
 		for (auto& color : randomRGBA)
 			color = ((float)rand() / (float)RAND_MAX) * 1.f;
 		randomRGBA[3] = 1.f;
-		randomR = ((float)rand() / (float)RAND_MAX) * 1.f;
-		randomG = ((float)rand() / (float)RAND_MAX) * 1.f;
-		randomB = ((float)rand() / (float)RAND_MAX) * 1.f;
-		randomA = 1.f;
+		
 
 		//v0
 		particleVertices[index] = -particleSize / 2.f + randomValueX;
@@ -655,7 +668,7 @@ void Renderer::Lecture3Particle() // x y z vx vy vz et lt
 	glUniform1f(uniformLocTime, gTime);
 
 	int uniformAccel = glGetUniformLocation(shader, "u_Accel");
-	glUniform3f(uniformAccel, 5.f,0.0,0.0);
+	glUniform3f(uniformAccel, 0.f,0.0,0.0);
 
 	int uniformLoop = glGetUniformLocation(shader, "bLoop");
 	glUniform1i(uniformLoop, true);
@@ -663,6 +676,23 @@ void Renderer::Lecture3Particle() // x y z vx vy vz et lt
 	gTime += 0.01f;
 	//if (gTime > 1.f) gTime = 0.f;
 	glDrawArrays(GL_TRIANGLES, 0, m_VBOManyParticleVertexCount);
+
+	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::Lecture4FSSand()
+{
+	GLuint shader = m_FSSandboxShader;
+	glUseProgram(shader);
+
+	int attribCount = (3 + 4);
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOSandbox);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * attribCount, 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glDisableVertexAttribArray(attribPosition);
 }

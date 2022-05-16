@@ -44,7 +44,7 @@ void main()
 		newPos = newPos + newAccel * t + 0.5f * u_Accel * tt;
 
 		vec3 rotVec = normalize(newAccel * g_RotMat);
-		newPos = newPos + rotVec * amp * t * sin(period * t * 2.0 * g_PI);
+		newPos = newPos + 0.1*rotVec * amp * t * sin(period * t * 2.0 * g_PI);
 		newPos.z = 0;
 
 	}
