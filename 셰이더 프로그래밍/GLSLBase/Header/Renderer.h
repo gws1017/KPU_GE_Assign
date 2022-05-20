@@ -27,6 +27,8 @@ public:
 	void Lecture3();
 	void Lecture3Particle();
 	void Lecture4FSSand();
+	void Lecture4_RainDrop();
+
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	bool ReadFile(char* filename, std::string *target);
