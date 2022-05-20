@@ -74,11 +74,32 @@ vec4 DrawCircles()
 	return returnColor;
 }
 
+vec4 RaidarCircle()
+{
+//Á»´õ ÀÌ»Ú°Ô Æ©´×ÇØº¸±â
+	float d = distance(vec2(0.5,0),v_Color.xy);
+	float sinValue = sin(2*d*2*PI - u_Time * 100);
+	sinValue = pow(sinValue,16);
+
+	vec4 returnColor = vec4(sinValue);
+
+	for(int i=0; i<10; i++)
+	{
+		float dTemp = distance(u_Points[i].xy,v_Color.xy);
+		float temp = sin(dTemp*4*PI );
+		temp = clamp(temp,0,1);
+		if(dTemp < 0.2f)
+			returnColor += vec4(temp);
+	}
+	return returnColor;
+}
+
 void main()
 {
 	//FragColor = CrossPattern();
 	//FragColor = DrawCircle();
 	//FragColor = DrawCircleLine();
 	//FragColor = DrawMultipleCircles();
-	FragColor = DrawCircles();
+	//FragColor = DrawCircles();
+	FragColor = RaidarCircle();
 }

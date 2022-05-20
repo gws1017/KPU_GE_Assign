@@ -28,6 +28,7 @@ public:
 	void Lecture3Particle();
 	void Lecture4FSSand();
 	void Lecture4_RainDrop();
+	void Lecture4_RadarCircle();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
