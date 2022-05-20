@@ -127,6 +127,54 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_VBOSandbox);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOSandbox);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture4_rect), lecture4_rect, GL_STATIC_DRAW);
+
+	float lecture4Pack0_Pos[]
+		=
+	{
+		-rectSize,-rectSize,0.0,
+		 rectSize, rectSize,0.0,
+		-rectSize, rectSize,0.0,
+		-rectSize,-rectSize,0.0,
+		 rectSize,-rectSize,0.0,
+		 rectSize, rectSize,0.0,
+	};//21+ 9
+	float lecture4Pack0_Color[]
+		=
+	{
+		1,1,1,1, //x,y,z ,r, g, b, a
+		1,1,1,1,
+		1,1,1,1, //triangle1
+		1,1,1,1,
+		1,1,1,1,
+		1,1,1,1, //triangle2
+	};//21+ 9
+	glGenBuffers(1, &m_VBOPack0_Pos);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack0_Pos);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture4Pack0_Pos), lecture4Pack0_Pos, GL_STATIC_DRAW);
+	glGenBuffers(1, &m_VBOPack0_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack0_Color);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture4Pack0_Color), lecture4Pack0_Color, GL_STATIC_DRAW);
+
+	float lecture4Pack1[]
+		=
+	{
+		-rectSize,-rectSize,0.0, 
+		 rectSize, rectSize,0.0, 
+		-rectSize, rectSize,0.0, 
+		-rectSize,-rectSize,0.0, 
+		 rectSize,-rectSize,0.0, 
+		 rectSize, rectSize,0.0, 
+		 1,1,1,1, //x,y,z ,r, g, b, a
+		 1,1,1,1,
+		 1,1,1,1, //triangle1
+		 1,1,1,1,
+		 1,1,1,1,
+		 1,1,1,1, //triangle2
+	};//21+ 9
+
+	glGenBuffers(1, &m_VBOPack1);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture4Pack1), lecture4Pack1, GL_STATIC_DRAW);
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -746,11 +794,35 @@ void Renderer::Lecture4_RadarCircle()
 
 	int attribCount = (3 + 4);
 
-	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	//Pack1
+	/*int attribPosition = glGetAttribLocation(shader, "a_Position");
 	glEnableVertexAttribArray(attribPosition);
+	int attribColor = glGetAttribLocation(shader, "a_Color");
+	glEnableVertexAttribArray(attribColor);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOSandbox);
 	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * attribCount, 0);
+	glVertexAttribPointer(attribColor, 4, GL_FLOAT, GL_FALSE, sizeof(float) * attribCount, (GLvoid*)(sizeof(float)*3));
+	*/
+	//Pack0
+	//int attribPosition = glGetAttribLocation(shader, "a_Position");
+	//glEnableVertexAttribArray(attribPosition);
+	//glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack0_Pos); //x,y, z
+	//glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 
+	//int attribColor = glGetAttribLocation(shader, "a_Color");
+	//glEnableVertexAttribArray(attribColor);
+	//glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack0_Color); //x,y, z
+	//glVertexAttribPointer(attribColor, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+
+	//Pack2
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);
+	int attribColor = glGetAttribLocation(shader, "a_Color");
+	glEnableVertexAttribArray(attribColor);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOPack1);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+	glVertexAttribPointer(attribColor, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (GLvoid*)(sizeof(float) * 18)); //6 * 3
+	
 	int uniformPoints = glGetUniformLocation(shader, "u_Points");
 	glUniform3fv(uniformPoints, 10, g_points);
 
