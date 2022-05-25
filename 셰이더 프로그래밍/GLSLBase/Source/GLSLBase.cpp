@@ -15,7 +15,7 @@ but WITHOUT ANY WARRANTY.
 
 #include "../Header/Renderer.h"
 
-Renderer *g_Renderer = NULL;
+Renderer* g_Renderer = NULL;
 
 int g_WindowSizeX = 500;
 int g_WindowSizeY = 500;
@@ -33,7 +33,8 @@ void RenderScene(void)
 	//g_Renderer->Lecture4FSSand();
 	//g_Renderer->Lecture4_RainDrop();
 	//g_Renderer->Lecture4_RadarCircle();
-	g_Renderer->Lecture5_LineSegment();
+	//g_Renderer->Lecture5_LineSegment();
+	g_Renderer->Lecture5_FullRect();
 
 	glutSwapBuffers();
 }
@@ -58,7 +59,7 @@ void SpecialKeyInput(int key, int x, int y)
 	RenderScene();
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	// Initialize GL things
 	glutInit(&argc, argv);
@@ -90,6 +91,6 @@ int main(int argc, char **argv)
 
 	delete g_Renderer;
 
-    return 0;
+	return 0;
 }
 
