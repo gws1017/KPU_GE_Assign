@@ -29,6 +29,7 @@ public:
 	void Lecture4FSSand();
 	void Lecture4_RainDrop();
 	void Lecture4_RadarCircle();
+	void Lecture5_LineSegment();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -36,6 +37,7 @@ private:
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
 	void CreateVertexBufferObjects(); 
+	void CreateLine(int SegCount);
 	unsigned char * Renderer::loadBMPRaw(const char * imagepath, unsigned int& outWidth, unsigned int& outHeight);
 
 	bool m_Initialized = false;
@@ -79,5 +81,10 @@ private:
 	GLuint m_VBOPack0_Pos = 0;
 	GLuint m_VBOPack0_Color = 0;
 	GLuint m_VBOPack1 = 0;
+
+	GLuint m_VBOLineSegment = 0;
+	int m_VBOLineSegmentCount = 0;
+
+	GLuint m_LineSegmentShader = 0;
 };
 
