@@ -21,7 +21,8 @@ public:
 	GLuint CreateBmpTexture(char * filePath);
 
 	void CreateParticle(int count);
-	   
+	void CreateTexture();
+
 	void Test();
 	void Lecture2();
 	void Lecture3();
@@ -91,5 +92,7 @@ private:
 	GLuint m_VBOFullRect = 0;
 
 	GLuint m_LineFullRectShader = 0;
+
+	GLuint m_TexChecker = 0;
 };
 
