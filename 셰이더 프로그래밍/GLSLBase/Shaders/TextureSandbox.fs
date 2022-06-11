@@ -48,11 +48,46 @@ vec4 P3() //P2 에서 y만 변경하면된다
 	return returnValue;
 }
 
-vec4 P4() //P2 에서 y만 변경하면된다
+vec4 P4() // y만 수정하면된다
 {
 	vec4 returnValue = vec4(0);
 	vec2 newTexCoord = v_TexCoord;
-	newTexCoord.y = fract(3.0f*v_TexCoord.y)/3.0 +floor(abs((v_TexCoord.y - 1.0)*3.0))/3.0;
+	newTexCoord.y = fract(3.0f*v_TexCoord.y)/3.0 + floor(abs((v_TexCoord.y - 1.0)*3.0))/3.0;
+	returnValue = texture(u_TexSampler,newTexCoord);
+
+	return returnValue;
+}
+
+vec4 P5() 
+{
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	newTexCoord.x = fract(2.0f*v_TexCoord.x) + floor(2.0f*v_TexCoord.y)*0.5;
+	newTexCoord.y = fract(2.0f*v_TexCoord.y);
+	returnValue = texture(u_TexSampler,newTexCoord);
+
+	return returnValue;
+}
+
+vec4 P6() // 숙제 - 변수화 해서 값만 바꾸면 nxn의 블록 그릴 수 있게 만들기
+{
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	float i = 4.0;
+	float j = 4.0;
+	newTexCoord.x = fract(i*v_TexCoord.x) + floor(j*v_TexCoord.y ) * 0.5f;
+	newTexCoord.y = fract(j*v_TexCoord.y);
+	returnValue = texture(u_TexSampler,newTexCoord);
+
+	return returnValue;
+}
+
+vec4 P7() 
+{
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	newTexCoord.x = fract(2.0f*v_TexCoord.x);
+	newTexCoord.y = fract(2.0f*v_TexCoord.y)+ floor(2.0f*v_TexCoord.x)*0.5;
 	returnValue = texture(u_TexSampler,newTexCoord);
 
 	return returnValue;
@@ -64,6 +99,9 @@ void main()
 	//FragColor = P1();
 	//FragColor = P2();
 	//FragColor = P3();
-	FragColor = P4();
+	//FragColor = P4();
+	//FragColor = P5();
+	//FragColor = P6();
+	FragColor = P7();
 	//FragColor = vec4(1,1,1,1);
 }
