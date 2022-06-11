@@ -32,6 +32,7 @@ public:
 	void Lecture4_RadarCircle();
 	void Lecture5_LineSegment();
 	void Lecture5_FullRect();
+	void Lecture6_TexSandbox();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -94,5 +95,9 @@ private:
 	GLuint m_LineFullRectShader = 0;
 
 	GLuint m_TexChecker = 0;
+
+	GLuint m_TextureSandBoxShader = 0;
+	GLuint m_VBOTexSandbox = 0;
+	GLuint m_TexRGB = 0;
 };
 

@@ -31,6 +31,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_FSSandboxShader = CompileShaders("./Shaders/FSSandbox.vs", "./Shaders/FSSandbox.fs");
 	m_LineSegmentShader = CompileShaders("./Shaders/LineSegment.vs", "./Shaders/LineSegment.fs");
 	m_LineFullRectShader = CompileShaders("./Shaders/FullRect.vs", "./Shaders/FullRect.fs");
+	m_TextureSandBoxShader = CompileShaders("./Shaders/TextureSandbox.vs", "./Shaders/TextureSandbox.fs");
 	//Create VBOs
 	CreateVertexBufferObjects();
 	//CreateParticle
@@ -39,6 +40,9 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	CreateLine(2000);
 	//CreatTexture
 	CreateTexture();
+
+	//Load Texture
+	m_TexRGB = CreatePngTexture("±×¸²2.png");
 
 	//Initialize camera settings
 	m_v3Camera_Position = glm::vec3(0.f, 0.f, 1000.f);
@@ -197,6 +201,22 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_VBOFullRect);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOFullRect);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture5_fullRect), lecture5_fullRect, GL_STATIC_DRAW);
+
+	rectSize = 0.5f;
+	float lecture6_PosTex[]
+		=
+	{
+		-rectSize,-rectSize,0.0, 0.f, 0.f,
+		 rectSize, rectSize,0.0, 1.f, 1.f,
+		-rectSize, rectSize,0.0, 0.f, 1.f,
+		-rectSize,-rectSize,0.0, 0.f, 0.f,
+		 rectSize,-rectSize,0.0, 1.f, 0.f,
+		 rectSize, rectSize,0.0, 1.f, 1.f
+	};//21+ 9
+
+	glGenBuffers(1, &m_VBOTexSandbox);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexSandbox);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lecture6_PosTex), lecture6_PosTex, GL_STATIC_DRAW);
 }
 
 void Renderer::CreateLine(int SegCount)
@@ -670,8 +690,8 @@ void Renderer::CreateTexture()
 
 	glGenTextures(1, &m_TexChecker);
 	glBindTexture(GL_TEXTURE_2D, m_TexChecker);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE,checkerboard );
 }
 
@@ -939,4 +959,32 @@ void Renderer::Lecture5_FullRect()
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::Lecture6_TexSandbox()
+{
+	GLuint shader = m_TextureSandBoxShader;
+	glUseProgram(shader);
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexSandbox);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+	int attribTex = glGetAttribLocation(shader, "a_TexCoord");
+	glEnableVertexAttribArray(attribTex);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOTexSandbox);
+	glVertexAttribPointer(attribTex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float)*3));
+
+	int uniformTex = glGetUniformLocation(shader, "u_TexSampler");
+	glUniform1i(uniformTex, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_TexRGB);
+
+	/*int uniformTime = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformTime, gTime);
+	gTime += 0.01f;*/
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDisableVertexAttribArray(attribPosition);
+	glDisableVertexAttribArray(attribTex);
 }
