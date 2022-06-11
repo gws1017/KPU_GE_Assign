@@ -33,14 +33,18 @@ public:
 	void Lecture5_LineSegment();
 	void Lecture5_FullRect();
 	void Lecture6_TexSandbox();
+	void Lecture9_DummyMesh();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	bool ReadFile(char* filename, std::string *target);
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
+	
 	void CreateVertexBufferObjects(); 
 	void CreateLine(int SegCount);
+	void CreateDummyMesh();
+
 	unsigned char * Renderer::loadBMPRaw(const char * imagepath, unsigned int& outWidth, unsigned int& outHeight);
 
 	bool m_Initialized = false;
@@ -100,5 +104,10 @@ private:
 	GLuint m_VBOTexSandbox = 0;
 	GLuint m_TexRGB = 0;
 	GLuint m_TexSmile = 0;
+
+	GLuint m_DummyVertexCount = 0;
+	GLuint m_VBODummyMesh = 0;
+	GLuint m_DummyMeshShader = 0;
+
 };
 
