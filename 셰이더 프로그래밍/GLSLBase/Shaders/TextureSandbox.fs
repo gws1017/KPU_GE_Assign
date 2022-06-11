@@ -3,6 +3,10 @@
 layout(location=0) out vec4 FragColor;
 
 uniform sampler2D u_TexSampler;
+uniform sampler2D u_TexSampler1;
+
+uniform float u_Time;
+
 in vec2 v_TexCoord;
 
 vec4 Flip()
@@ -82,13 +86,44 @@ vec4 P6() // 숙제 - 변수화 해서 값만 바꾸면 nxn의 블록 그릴 수 있게 만들기
 	return returnValue;
 }
 
-vec4 P7() 
+vec4 P7() //숙제 - x가 아니라 y를 기준으로 0.5 shift 하기
 {
 	vec4 returnValue = vec4(0);
 	vec2 newTexCoord = v_TexCoord;
 	newTexCoord.x = fract(2.0f*v_TexCoord.x);
 	newTexCoord.y = fract(2.0f*v_TexCoord.y)+ floor(2.0f*v_TexCoord.x)*0.5;
 	returnValue = texture(u_TexSampler,newTexCoord);
+
+	return returnValue;
+}
+
+vec4 P8() 
+{
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	newTexCoord.x = fract(2.0f*v_TexCoord.x);
+
+	if(v_TexCoord.x > 0.5)
+	{
+		returnValue = texture(u_TexSampler1,newTexCoord);
+	}
+	else
+	{
+		returnValue = texture(u_TexSampler,newTexCoord);
+	}
+
+	return returnValue;
+}
+
+vec4 P9() 
+{
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	vec2 newTexCoord1 = v_TexCoord;
+	
+	newTexCoord1.x += u_Time;
+	//newTexCoord1.x = fract(newTexCoord1.x);
+	returnValue = texture(u_TexSampler,newTexCoord) * texture(u_TexSampler1,newTexCoord1);
 
 	return returnValue;
 }
@@ -102,6 +137,7 @@ void main()
 	//FragColor = P4();
 	//FragColor = P5();
 	//FragColor = P6();
-	FragColor = P7();
+	//FragColor = P7();
+	FragColor = P9();
 	//FragColor = vec4(1,1,1,1);
 }

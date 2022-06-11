@@ -690,8 +690,8 @@ void Renderer::CreateTexture()
 
 	glGenTextures(1, &m_TexChecker);
 	glBindTexture(GL_TEXTURE_2D, m_TexChecker);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE,checkerboard );
 }
 
@@ -980,9 +980,15 @@ void Renderer::Lecture6_TexSandbox()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_TexRGB);
 
-	/*int uniformTime = glGetUniformLocation(shader, "u_Time");
+
+	uniformTex = glGetUniformLocation(shader, "u_TexSampler1");
+	glUniform1i(uniformTex, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_TexChecker);
+	
+	int uniformTime = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformTime, gTime);
-	gTime += 0.01f;*/
+	gTime += 0.01f;
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(attribPosition);
