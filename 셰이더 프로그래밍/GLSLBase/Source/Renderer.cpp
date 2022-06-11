@@ -43,6 +43,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
 	//Load Texture
 	m_TexRGB = CreatePngTexture("그림2.png");
+	m_TexSmile = CreatePngTexture("그림3.png");
 
 	//Initialize camera settings
 	m_v3Camera_Position = glm::vec3(0.f, 0.f, 1000.f);
@@ -978,7 +979,7 @@ void Renderer::Lecture6_TexSandbox()
 	int uniformTex = glGetUniformLocation(shader, "u_TexSampler");
 	glUniform1i(uniformTex, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_TexRGB);
+	glBindTexture(GL_TEXTURE_2D, m_TexSmile);
 
 
 	uniformTex = glGetUniformLocation(shader, "u_TexSampler1");
@@ -988,8 +989,9 @@ void Renderer::Lecture6_TexSandbox()
 	
 	int uniformTime = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformTime, gTime);
-	gTime += 0.01f;
-
+	gTime += 0.1f;
+	if (gTime > 5.f)
+		gTime = 0.f;
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(attribPosition);
 	glDisableVertexAttribArray(attribTex);

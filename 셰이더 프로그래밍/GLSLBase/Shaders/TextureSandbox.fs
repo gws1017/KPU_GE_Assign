@@ -128,6 +128,18 @@ vec4 P9()
 	return returnValue;
 }
 
+vec4 P10() //단일 텍스처 사용 애니메이션
+{
+	float texture_index = 6.0;
+	vec4 returnValue = vec4(0);
+	vec2 newTexCoord = v_TexCoord;
+	newTexCoord.y = (floor(u_Time) + (1.0 - v_TexCoord.y))/texture_index;
+	
+	returnValue = texture(u_TexSampler,newTexCoord);
+
+	return returnValue;
+}
+
 void main()
 {
 	//FragColor = Flip();
@@ -138,6 +150,7 @@ void main()
 	//FragColor = P5();
 	//FragColor = P6();
 	//FragColor = P7();
-	FragColor = P9();
+	//FragColor = P9();
+	FragColor = P10();
 	//FragColor = vec4(1,1,1,1);
 }
