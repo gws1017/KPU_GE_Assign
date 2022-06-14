@@ -33,7 +33,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_LineFullRectShader = CompileShaders("./Shaders/FullRect.vs", "./Shaders/FullRect.fs");
 	m_TextureSandBoxShader = CompileShaders("./Shaders/TextureSandbox.vs", "./Shaders/TextureSandbox.fs");
 	m_DummyMeshShader = CompileShaders("./Shaders/DummyMesh.vs", "./Shaders/DummyMesh.fs");
-	
+	m_FullRectTexShader = CompileShaders("./Shaders/FullRectShader.vs", "./Shaders/FullRectShader.fs");
+
 	//Create VBOs
 	CreateVertexBufferObjects();
 	//CreateParticle
@@ -44,6 +45,15 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	CreateTexture();
 	//Create Dummy Mesh
 	CreateDummyMesh();
+
+	//Create FBOs
+	for (int i = 0; i < 4; ++i)
+		CreateFBOs(m_FBOTextures[i], m_RBDepths[i], m_FBOs[i]);
+
+	m_FBOFunctions[0] = [this]() {Lecture3Particle(); };
+	m_FBOFunctions[1] = [this]() {Lecture5_LineSegment(); };
+	m_FBOFunctions[2] = [this]() {Lecture4_RadarCircle(); };
+	m_FBOFunctions[3] = [this]() {Lecture9_DummyMesh(); };
 
 	//Load Texture
 	m_TexRGB = CreatePngTexture("±×¸²2.png");
@@ -325,6 +335,57 @@ void Renderer::CreateDummyMesh()
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBODummyMesh);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3, vertices, GL_STATIC_DRAW);
 
+}
+
+void Renderer::CreateFBOs(GLuint& FBOTexture, GLuint& RBDepth, GLuint& FBO)
+{
+	glGenTextures(1, &FBOTexture);
+	glBindTexture(GL_TEXTURE_2D, FBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenRenderbuffers(1, &RBDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, RBDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBOTexture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, RBDepth);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "FBO Generate Error" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::DrawFullScreenTexture(GLuint* viewport, GLuint texID)
+{
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+	GLuint shader = m_FullRectTexShader;
+	glUseProgram(shader);
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBOFullRect);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+
+	int uniformSampler = glGetUniformLocation(shader, "u_Sampler");
+	glUniform1i(uniformSampler, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDisableVertexAttribArray(attribPosition);
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -1084,7 +1145,7 @@ void Renderer::Lecture6_TexSandbox()
 
 void Renderer::Lecture9_DummyMesh()
 {
-
+	//glViewport(0, 0, 250, 250);
 	GLuint shader = m_DummyMeshShader;
 	glUseProgram(shader);
 
@@ -1099,4 +1160,31 @@ void Renderer::Lecture9_DummyMesh()
 
 	glDrawArrays(GL_TRIANGLES, 0, m_DummyVertexCount);
 	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::FBORender()
+{
+	for (int i = 0; i < 4; ++i)
+		DrawFrameBuffer(m_FBOs[i], m_FBOFunctions[i]);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLuint view_port[4][4] =
+	{	
+		0, 0, 250, 250,
+		250, 0, 250, 250,
+		0, 250, 250, 250,
+		250, 250, 250, 250
+	};
+	for(int i = 0; i<4; ++i)
+		DrawFullScreenTexture(view_port[i], m_FBOTextures[i]);
+	
+}
+
+void Renderer::DrawFrameBuffer(const GLuint& FBO, std::function<void()> func)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glViewport(0, 0, 512, 512);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	func();
 }

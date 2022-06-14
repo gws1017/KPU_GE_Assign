@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <functional>
 
 #include "../Dependencies\glew.h"
 #include "../Dependencies\wglew.h"
@@ -34,6 +35,8 @@ public:
 	void Lecture5_FullRect();
 	void Lecture6_TexSandbox();
 	void Lecture9_DummyMesh();
+	void FBORender();
+
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -44,6 +47,9 @@ private:
 	void CreateVertexBufferObjects(); 
 	void CreateLine(int SegCount);
 	void CreateDummyMesh();
+	void CreateFBOs(GLuint& FBOTexture, GLuint& RBDepth, GLuint& FBO);
+	void DrawFrameBuffer(const GLuint& FBO, std::function<void()> func);
+	void DrawFullScreenTexture(GLuint* viewport,GLuint texID);
 
 	unsigned char * Renderer::loadBMPRaw(const char * imagepath, unsigned int& outWidth, unsigned int& outHeight);
 
@@ -108,6 +114,13 @@ private:
 	GLuint m_DummyVertexCount = 0;
 	GLuint m_VBODummyMesh = 0;
 	GLuint m_DummyMeshShader = 0;
+
+	GLuint m_FullRectTexShader = 0;
+
+	std::function<void()> m_FBOFunctions[4];
+	GLuint m_FBOTextures[4] = { 0 };
+	GLuint m_RBDepths[4] = { 0 };
+	GLuint m_FBOs[4] = { 0 };
 
 };
 
