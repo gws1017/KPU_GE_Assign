@@ -1,0 +1,6 @@
+To keep download sizes smaller from now on, larger resource files such as the skymap and
+3d model used in this lesson must be downloaded from braynzar vision:
+
+http://www.braynzarsoft.net/vision
+
+This lesson uses the female model and cloudy skymap. of course you are free to use your own ;)
