@@ -1,0 +1,28 @@
+텍스처 포맷
+알파이미지 (dds) = 8bpp gray
+(dds,dx10) BC1_UNORM_SRGB
+(dds,dxT1) BC1_UNORM
+
+쉐이더 시멘틱설정
+AligendOffset : 말그대로 오프셋 InputSlot의 R32G32B32A32 에서 32하나가 4바이트
+R32G32B32A32 이거는 4바이트x4 16만큼의 공간사용 다음 시멘틱 오프셋은 +16임
+
+오브젝트 추가시 설정할 것
+Scene
+- BuildObject() : 추가할 오브젝트의 세이더를 생성하는곳 
+- CreateGraphicsRootSignature() : pd3dDescriptorRanges[] , pd3dRootParameters[]
+
+Shader.hlsl
+- struct : 해당오브젝트가 받을 시멘틱 정보를 담은 구조체 추가
+- VS_ : 정점버퍼 추가
+- PS_ : 픽셀버퍼 추가
+
+Shader.cpp
+- 추가한 오브젝트의 세이더 클래스추가하기
+
+Mesh
+- 오브젝트가 메시를 사용한다면 해당 메시 클래스 추가하기
+
+Object
+- 추가한 오브젝트의 클래스 추가(CGameObject 상속)
+- 이 오브젝트만의 다른 특성이 있다면 하위에 함수 추가하기
